@@ -27,6 +27,7 @@
 #include <algorithm>
 
 #include <ctype.h>
+#include <cstring>
 
 using std::cout;
 using std::cerr;
@@ -6450,7 +6451,7 @@ void Asm::In::emitsna(std::ostream & out)
 	out.put(7); // Border Color
 
 	// set PAPER 7 INK 0
-	std::memset(mem + 22528, 7 << 3, 768);
+	::memset(mem + 22528, 7 << 3, 768);
 
 	// put entry point on stack or throw error if there isn't one
 	if (hasentrypoint)
