@@ -2,6 +2,7 @@
 // Revision 15-apr-2008
 
 #include "asm.h"
+#include "memmap.h"
 
 #include <string>
 #include <vector>
@@ -20,7 +21,7 @@ using std::string;
 using std::vector;
 using std::runtime_error;
 
-const string pasmoversion ("0.5.4.beta2");
+const string pasmoversion ("0.5.4.beta2i.jik");
 
 
 class Usage { };
@@ -75,6 +76,8 @@ const string optprl       ("--prl");
 const string optpublic    ("--public");
 const string opttap       ("--tap");
 const string opttapbas    ("--tapbas");
+const string opttapbas128 ("--tapbas128");
+const string optmemmap    ("--memmap");
 const string opttzx       ("--tzx");
 const string opttzxbas    ("--tzxbas");
 const string optw8080     ("--w8080");
@@ -84,6 +87,7 @@ const string optsna       ("--sna");
 class Options {
 public:
 	Options (int argc, char * * argv);
+    ~Options ();
 
 	typedef void (Asm::* emitfunc_t) (std::ostream &);
 
@@ -97,10 +101,14 @@ public:
 	string getfilepublic () const;
 	string getheadername () const { return headername; }
 	void apply (Asm & assembler) const;
+    MemMap& getmemmap();
+    bool getdumpmemmap() const { return dumpmemmap; }
 private:
 	emitfunc_t emitfunc;
 	static const emitfunc_t emitdefault;
+    MemMap* memmap;
 
+    bool dumpmemmap;
 	bool verbose;
 	bool emitpublic;
 	Asm::DebugType debugtype;
@@ -125,6 +133,24 @@ private:
 
 const Options::emitfunc_t Options::emitdefault (& Asm::emitobject);
 
+MemMap& Options::getmemmap()
+{
+    if (memmap == NULL) {
+        // If memory mapping was not explicit then create the
+        // default plain 64K RAM mapping..
+        memmap = new MapPlain();
+    }
+
+    return *memmap;
+}
+
+Options::~Options()
+{
+    if (memmap) {
+        delete memmap;
+    }
+}
+
 
 Options::Options (int argc, char * * argv) :
 	emitfunc (emitdefault),
@@ -137,7 +163,9 @@ Options::Options (int argc, char * * argv) :
 	bracketonly (false),
 	warn8080 (false),
 	mode86 (false),
-	pass3 (false)
+	pass3 (false),
+    dumpmemmap(false),
+    memmap(NULL)
 {
 	int argpos;
 	for (argpos= 1; argpos < argc; ++argpos)
@@ -161,9 +189,13 @@ Options::Options (int argc, char * * argv) :
 			emitfunc= & Asm::emittzx;
 		else if (arg == optcdt)
 			emitfunc= & Asm::emitcdt;
-		else if (arg == opttapbas)
+		else if (arg == opttapbas) {
+            memmap = new MapSpectrum48;
 			emitfunc= & Asm::emittapbas;
-		else if (arg == opttzxbas)
+        } else if (arg == opttapbas128) {
+            memmap = new MapSpectrum128;
+            emitfunc = &Asm::emittapbas128;
+        } else if (arg == opttzxbas)
 			emitfunc= & Asm::emittzxbas;
 		else if (arg == optcdtbas)
 			emitfunc= & Asm::emitcdtbas;
@@ -182,6 +214,8 @@ Options::Options (int argc, char * * argv) :
 				throw NeedArgument (optname);
 			headername= argv [argpos];
 		}
+        else if (arg == optmemmap)
+            dumpmemmap = true;
 		else if (arg == optv)
 			verbose= true;
 		else if (arg == optd)
@@ -309,7 +343,7 @@ int doit (int argc, char * * argv)
 
 	// Assemble.
 
-	Asm assembler;
+	Asm assembler(option.getmemmap());
 
 	option.apply (assembler);
 
@@ -370,6 +404,9 @@ int doit (int argc, char * * argv)
 			sout.close ();
 		}
 	}
+
+    if (option.getdumpmemmap())
+        option.getmemmap().dumpmapping();
 
 	return 0;
 }

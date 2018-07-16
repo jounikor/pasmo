@@ -8,9 +8,11 @@
 #include <set>
 #include <deque>
 
+#include "memmap.h"
+
 class Asm {
 public:
-	Asm ();
+	Asm (MemMap&);
 
 	// This is not a copy constructor, it creates a new
 	// instance copying only the options.
@@ -46,6 +48,7 @@ public:
 	void emitcdt (std::ostream & out);
 
 	void emittapbas (std::ostream & out);
+    void emittapbas128 (std::ostream & out);
 	void emittzxbas (std::ostream & out);
 	void emitcdtbas (std::ostream & out);
 

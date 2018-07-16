@@ -71,6 +71,8 @@ logic_error MACROLostENDM ("Unexpected MACRO without ENDM");
 
 // Errors in the code being assembled.
 
+runtime_error InvalidBANK ("Invalid BANK value or out of bounds");
+
 runtime_error ErrorReadingINCBIN ("Error reading INCBIN file");
 runtime_error ErrorOutput ("Error writing object file");
 runtime_error ErrorSNAOutput("Error writing object file; No start address defined. Use END to set address.");
@@ -876,7 +878,7 @@ using pasmo_impl::LocalStack;
 
 class Asm::In : public AsmFile {
 public:
-	In ();
+	In (MemMap& map);
 
 	// This is not a copy constructor, it creates a new
 	// instance copying the options and the AsmFile.
@@ -922,8 +924,10 @@ public:
 	void emitcdtbas (std::ostream & out);
 
 	std::string spectrumbasicloader ();
+	std::string spectrumpagedbasicloader ();
 
 	void emittapbas (std::ostream & out);
+	void emittapbas128 (std::ostream & out);
 	void emittzxbas (std::ostream & out);
 
 	void emitsna(std::ostream & out);
@@ -1015,6 +1019,8 @@ private:
 	void parseEndOfInclude (Tokenizer & tz);
 
 	void parseORG (Tokenizer & tz,
+		const std::string & label= std::string () );
+	void parseBANK (Tokenizer & tz,
 		const std::string & label= std::string () );
 	void parseSTACK(Tokenizer & tz,
 		const std::string & label = std::string());
@@ -1158,8 +1164,9 @@ private:
 	bool mode86;
 	DebugType debugtype;
 
-	byte mem[65536]{};
-	address base;
+	//byte mem[65536]{};
+	MemMap& mem;
+    address base;
 	address current;
 	address currentinstruction;
 	address minused;
@@ -1352,7 +1359,7 @@ void LocalStack::pop ()
 //*********************************************************
 
 
-Asm::In::In () :
+Asm::In::In (MemMap& map) :
 	AsmFile (),
 	nocase (false),
 	autolocalmode (false),
@@ -1375,7 +1382,8 @@ Asm::In::In () :
 	pverb (& nullout),
 	pwarn (& cerr),
 	localcount (0),
-	pcurrentmframe (0)
+	pcurrentmframe (0),
+    mem(map)
 {
 }
 
@@ -1400,7 +1408,8 @@ Asm::In::In (const Asm::In & in) :
 	pverb (in.pverb),
 	pwarn (in.pwarn),
 	localcount (0),
-	pcurrentmframe (0)
+	pcurrentmframe (0),
+    mem(in.mem)
 {
 }
 
@@ -2331,6 +2340,9 @@ void Asm::In::parseline (Tokenizer & tz)
 	case TypeORG:
 		parseORG (tz);
 		break;
+	case TypeBANK:
+		parseBANK (tz);
+		break;
 	case TypeSTACK:
 		parseSTACK(tz);
 		break;
@@ -2802,6 +2814,24 @@ void Asm::In::parseORG (Tokenizer & tz, const std::string & label)
 
 	if (! label.empty () )
 		setlabel (label);
+}
+
+void Asm::In::parseBANK(Tokenizer & tz, const std::string & label)
+{
+    Token tok= tz.gettoken ();
+    int bank = parseexpr(true, tok, tz);
+
+    *pout << "\t\tBANK " << bank << endl;
+
+    if (bank < 0 || bank >= mem.getnumbanks()) {
+        throw InvalidBANK;
+    }
+
+    mem.setcurrentbank(bank);
+
+    if (!label.empty()) {
+        setlabel(label);
+    }
 }
 
 void Asm::In::parseSTACK(Tokenizer & tz, const std::string & label)
@@ -6587,6 +6617,36 @@ std::string Asm::In::spectrumbasicloader ()
 	return basic;
 }
 
+std::string Asm::In::spectrumpagedbasicloader ()        // TODO
+{
+        using namespace spectrum;
+
+        std::string basic;
+
+        // Line: 10 CLEAR before_min_used
+        std::string line= tokCLEAR + number (minused - 1);
+        basic+= basicline (10, line);
+
+        // Line: 20 POKE 23610, 255
+        // To avoid a error message when using +3 loader.
+        line= tokPOKE + number (23610) + ',' + number (255);
+        basic+= basicline (20, line);
+
+        // Line: 30 LOAD "" CODE
+        line= tokLOAD + "\"\"" + tokCODE;
+        basic+= basicline (30, line);
+
+        if (hasentrypoint)
+        {
+                // Line: 40 RANDOMIZE USR entry_point
+                line= tokRANDOMIZE + tokUSR + number (entrypoint);
+                basic+= basicline (40, line);
+        }
+
+        return basic;
+}
+
+
 void Asm::In::emittapbas (std::ostream & out)
 {
 	if (debugtype != NoDebug)
@@ -6604,6 +6664,34 @@ void Asm::In::emittapbas (std::ostream & out)
 	basicblock.write (out);
 
 	emittap (out);
+}
+
+void Asm::In::emittapbas128(std::ostream & out)
+{
+        if (debugtype != NoDebug)
+                * pout << "Emiting TAP 128K basic loader" << endl;
+
+    if (mem.gotpaged()) {
+        printf("***Paged memory used.. must save as a multipart file..\n");
+
+        // Prepare datas for banked output..
+
+
+    } else {
+
+            // Prepare the data.
+
+        std::string basic (spectrumbasicloader () );
+        tap::BasicHeader basicheadblock (basic);
+        tap::BasicBlock basicblock (basic);
+
+        // Write the file.
+
+        basicheadblock.write (out);
+        basicblock.write (out);
+
+        emittap (out);
+    }
 }
 
 void Asm::In::emittzxbas (std::ostream & out)
@@ -6895,8 +6983,8 @@ void Asm::In::dumpsymbol (std::ostream & out)
 //*********************************************************
 
 
-Asm::Asm () :
-	pin (new In)
+Asm::Asm (MemMap& map) :
+	pin (new In(map))
 {
 }
 
@@ -7015,6 +7103,11 @@ void Asm::emitcdtbas (std::ostream & out)
 void Asm::emittapbas (std::ostream & out)
 {
 	pin->emittapbas (out);
+}
+
+void Asm::emittapbas128 (std::ostream & out)
+{
+	pin->emittapbas128 (out);
 }
 
 void Asm::emittzxbas (std::ostream & out)

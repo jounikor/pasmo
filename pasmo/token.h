@@ -220,6 +220,7 @@ enum TypeToken {
 	TypeEXITM,
 	TypeREPT,
 	TypeIRP,
+    TypeBANK,
 
 	// Directives with .
 	Type_ERROR,

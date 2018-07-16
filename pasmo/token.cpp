@@ -238,6 +238,7 @@ const NameType nt []= {
 	NT (EXITM),
 	NT (REPT),
 	NT (IRP),
+    NT (BANK),
 
 	// Directives with .
 	NT_ (ERROR),
