@@ -6621,6 +6621,46 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
 {
         using namespace spectrum;
 
+#if 0
+
+start:
+
+
+               DI                   243
+               LD  A,(23388)        58,92,91
+               AND $F8              230,248
+               LD  B,A              71
+               LD  A,(23608)        58,56,92
+               OR  B                176
+               LD  (23388), A       50,92,91
+               LD  BC, $7FFD        1,253,127
+               OUT (C), A           237,121
+               EI                   251
+               RET                  201  -> 21 kpl
+
+    10 REM ....
+    20 CLEAR minused-1
+    30 POKE 23610,255
+
+
+    23608 -> lenght of a warning buzz (used to pass parameters)
+    23388 -> last page address
+    23635 -> address of basic program
+
+    10 REM 012345678901234567890
+    20 CLEAR VAL "minused-1": LET c = (PEEK VAL "23635" + VAL "256" * PEEK VAL "23636") + VAL "xx"
+    30 FOR n = 0 TO 20: READ x: POKE c+n,x: NEXT n
+    40 READ b 
+    50 IF b <> -1 THEN POKE VAL "23608",b: RANDOMIZE USR c
+    50 IF b = -1 THEN READ a: RANDOMIZE USR a: STOP
+    60 LOAD "" CODE: GOTO 40
+    
+    100 DATA 243,58,92,91,230,248,71,58,56,92,176,50,92,91,1,253,127,237,121,251,201
+    110 DATA 0,0,0,0,0,0,0,0
+    120 DATA -1,255,255
+
+#endif
+
         std::string basic;
 
         // Line: 10 CLEAR before_min_used

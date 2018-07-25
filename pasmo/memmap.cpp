@@ -19,10 +19,10 @@ using std::logic_error;
 logic_error MemMapPages("Memory map slots occypy more than 64K of RAM");
 logic_error MemMapBanks("Unsupported memory map bank size");
 logic_error BankOutOfBounds("Invalid memory bank index");
-logic_error MemMapROMAccess("Access to a ROM page");
-logic_error MemMapConverted ("Memory map already converted to a flat mem array.");   	// JiK
 
-runtime_error EmitPagedAsPlain ("Accessing paged memory map as a flat mem array is not possible. Check for BANK statements.");   	// JiK
+runtime_error MemMapROMAccess("Access to a ROM page");
+runtime_error MemMapConverted("Memory map already converted to a flat mem array.");
+runtime_error EmitPagedAsPlain("Accessing paged memory map as a flat mem array is not possible. Check for BANK statements.");
 
 //
 const int Bank::banksize = 1<<14;   // 16384
@@ -96,7 +96,7 @@ byte* const MemMap::operator+(int pos)
     int j, p = 0;
 
     if (mem == NULL) {
-	if (gotpaged_) {		// JiK
+	if (gotpaged_) {
 	    throw EmitPagedAsPlain;
 	}
 
