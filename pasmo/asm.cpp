@@ -913,6 +913,7 @@ public:
 	void emitobject (std::ostream & out);
 	void emitplus3dos (std::ostream & out);
 	void emittap (std::ostream & out);
+    void emitpagedtap (std::ostream & out);
 
 	void writetzxcode (std::ostream & out);
 	void emittzx (std::ostream & out);
@@ -6332,6 +6333,58 @@ void Asm::In::emittap (std::ostream & out)
 		throw ErrorOutput;
 }
 
+void Asm::In::emitpagedtap (std::ostream & out)
+{
+	message_emit ("PAGED TAP");
+    int bank;
+    address minused, maxused;
+    address codesize, pos;
+    byte bankmem[Bank::banksize];
+    std::string headername; 
+
+    for (bank = 0; bank < mem.getnumbanks(); bank++) {
+        mem.setcurrentbank(bank);
+
+        if (mem.iscurrentbankused()) {
+            std::ostringstream oss;
+            oss << bank;
+            
+            minused = mem.getcurrentbankminused();
+            maxused = mem.getcurrentbankmaxused();
+            codesize = maxused - minused + 1;
+            
+            // check for a case where the same bank is accessed from through
+            // fixed page and swappable page i.e., codesize cannot be
+            // larger than the bank size..
+            codesize &= (Bank::banksize-1);
+            
+            //
+            headername = "bank" + oss.str() + ".tap";
+
+            if (debugtype != NoDebug) {
+                *pout << "Emiting BANK" << bank << " as '" << headername << "' from " << 
+                    hex4(minused) << " to " << hex4(minused+codesize-1) << "\n";    
+            }
+
+            // we know max bank size is 16K thus it will always fit into 
+            // 16 bit address type
+            for (pos = 0; pos < codesize; pos++) {
+                bankmem[pos] = mem[minused+pos];
+            }
+
+	        tap::CodeHeader headcodeblock (minused, codesize, headername);
+	        tap::CodeBlock codeblock (codesize, bankmem);
+
+	        // Write the file.
+	        headcodeblock.write (out);
+	        codeblock.write (out);
+
+	        if (! out)
+	       	    throw ErrorOutput;
+        }
+    }
+}
+
 void Asm::In::writetzxcode (std::ostream & out)
 {
 	// Preapare data needed.
@@ -6622,66 +6675,94 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         using namespace spectrum;
 
 #if 0
+        DI                   243
+        LD  A,(23388)        58,92,91
+        AND $F8              230,248
+        LD  B,A              71
+        LD  A,(23608)        58,56,92
+        OR  B                176
+        LD  (23388), A       50,92,91
+        LD  BC, $7FFD        1,253,127
+        OUT (C), A           237,121
+        EI                   251
+        RET                  201  -> 21 kpl
 
-start:
-
-
-               DI                   243
-               LD  A,(23388)        58,92,91
-               AND $F8              230,248
-               LD  B,A              71
-               LD  A,(23608)        58,56,92
-               OR  B                176
-               LD  (23388), A       50,92,91
-               LD  BC, $7FFD        1,253,127
-               OUT (C), A           237,121
-               EI                   251
-               RET                  201  -> 21 kpl
-
-    10 REM ....
-    20 CLEAR minused-1
-    30 POKE 23610,255
-
-
-    23608 -> lenght of a warning buzz (used to pass parameters)
-    23388 -> last page address
-    23635 -> address of basic program
-
-    10 REM 012345678901234567890
-    20 CLEAR VAL "minused-1": LET c = (PEEK VAL "23635" + VAL "256" * PEEK VAL "23636") + VAL "xx"
-    30 FOR n = 0 TO 20: READ x: POKE c+n,x: NEXT n
-    40 READ b 
-    50 IF b <> -1 THEN POKE VAL "23608",b: RANDOMIZE USR c
-    50 IF b = -1 THEN READ a: RANDOMIZE USR a: STOP
-    60 LOAD "" CODE: GOTO 40
-    
-    100 DATA 243,58,92,91,230,248,71,58,56,92,176,50,92,91,1,253,127,237,121,251,201
-    110 DATA 0,0,0,0,0,0,0,0
-    120 DATA -1,255,255
-
+        23608 -> lenght of a warning buzz (used to pass parameters)
+        23388 -> last page address
+        23635 -> address of basic program
 #endif
-
         std::string basic;
+        int bank;
 
-        // Line: 10 CLEAR before_min_used
-        std::string line= tokCLEAR + number (minused - 1);
+        // 10 REM 012345678901234567890
+        std::string line = tokREM + "012345678901234567890";
         basic+= basicline (10, line);
-
-        // Line: 20 POKE 23610, 255
-        // To avoid a error message when using +3 loader.
-        line= tokPOKE + number (23610) + ',' + number (255);
+        
+        // 20 CLEAR VAL "00000": LET c=(PEEK VAL "23635"+VAL "256"*PEEK VAL "23636")+VAL "5"
+        line = tokCLEAR + VALnumber (minused-1) + ':' + tokLET + "c=(" + tokPEEK + VALnumber (23635) \
+             + '+' + VALnumber(256) + '*' + tokPEEK + VALnumber(23636) + ")+" + VALnumber(5);
         basic+= basicline (20, line);
+        
+        // 30 FOR n = VAL "0" TO VAL "20": READ x: POKE c+n,x: NEXT n
+        line = tokFOR + "n=" + VALnumber(0) + tokTO + VALnumber(20) + ':' + tokREAD + "x:" \
+             + tokPOKE + "c+n,x:" + tokNEXT + 'n';
+        basic += basicline(30,line);
 
-        // Line: 30 LOAD "" CODE
-        line= tokLOAD + "\"\"" + tokCODE;
-        basic+= basicline (30, line);
+        // 40 READ b
+        line = tokREAD + 'b';
+        basic += basicline(40,line);
+        
+        // 50 IF b < VAL"8" THEN POKE VAL "23608",b: RANDOMIZE USR c: LOAD "" CODE
+        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPOKE + VALnumber(23608) \
+             + ",b:" + tokRANDOMIZE + tokUSR + "c:" + tokLOAD + "\"\"" + tokCODE;
+        basic += basicline(50,line);
 
-        if (hasentrypoint)
-        {
+        // 60 IF b = VAL"8" THEN READ a: RANDOMIZE USR VAL "00000": STOP
+        line = tokIF + "b=" + VALnumber(8) + tokTHEN;
+        
+        if (hasentrypoint) {
                 // Line: 40 RANDOMIZE USR entry_point
-                line= tokRANDOMIZE + tokUSR + number (entrypoint);
-                basic+= basicline (40, line);
+            line = line + tokRANDOMIZE + tokUSR + VALnumber(entrypoint) + ':';
         }
+
+        line += tokSTOP;
+        basic += basicline(60,line);
+        
+        // 70 GO TO VAL "40"
+        line = tokGOTO + VALnumber(40);
+        basic += basicline(70,line);
+
+        // 100 DATA VAL"243", VAL"58", VAL"92", VAL"91", VAL"230", VAL"248", VAL"71"
+        line = tokDATA + VALnumber(243) + ',' + VALnumber(58) + ',' + VALnumber(92) + ',' \
+             + VALnumber(91) + ',' + VALnumber(230) + ',' + VALnumber(248) + ',' + VALnumber(71);
+        basic += basicline(100,line);
+        
+        // 101 DATA VAL  "58", VAL  "56", VAL  "92", VAL "176", VAL  "50", VAL  "92", VAL  "91"
+        line = tokDATA + VALnumber(58) + ',' + VALnumber(56) + ',' + VALnumber(92) + ',' \
+             + VALnumber(176) + ',' + VALnumber(50) + ',' + VALnumber(92) + ',' + VALnumber(91);
+        basic += basicline(101,line);
+        
+        // 102 DATA VAL   "1", VAL "253", VAL "127", VAL "237", VAL "121", VAL "251", VAL "201"
+        line = tokDATA + VALnumber(1) + ',' + VALnumber(253) + ',' + VALnumber(127) + ',' \
+             + VALnumber(237) + ',' + VALnumber(121) + ',' + VALnumber(251) + ',' + VALnumber(201);
+        basic += basicline(102,line);
+       
+        // output as many data entries as there are banks.. there is atleast one..
+        // 110 DATA VAL "0", ...
+        line = tokDATA;
+
+        for (bank = 0;  bank < mem.getnumbanks(); bank++) {
+            mem.setcurrentbank(bank);
+            
+            if (mem.iscurrentbankused()) {
+                line += VALnumber(bank);
+                line += ',';
+            }
+        }
+
+        // end mark VAL "8"
+        line += VALnumber(8);
+        basic += basicline(110,line);
 
         return basic;
 }
@@ -6708,20 +6789,11 @@ void Asm::In::emittapbas (std::ostream & out)
 
 void Asm::In::emittapbas128(std::ostream & out)
 {
-        if (debugtype != NoDebug)
-                * pout << "Emiting TAP 128K basic loader" << endl;
-
     if (mem.gotpaged()) {
-        printf("***Paged memory used.. must save as a multipart file..\n");
-
-        // Prepare datas for banked output..
-
-
-    } else {
-
-            // Prepare the data.
-
-        std::string basic (spectrumbasicloader () );
+        if (debugtype != NoDebug)
+            * pout << "Emiting TAP 128K basic loader" << endl;
+        
+        std::string basic (spectrumpagedbasicloader () );
         tap::BasicHeader basicheadblock (basic);
         tap::BasicBlock basicblock (basic);
 
@@ -6730,7 +6802,13 @@ void Asm::In::emittapbas128(std::ostream & out)
         basicheadblock.write (out);
         basicblock.write (out);
 
-        emittap (out);
+        // Prepare datas for banked output..
+        emitpagedtap (out);
+    } else {
+        if (debugtype != NoDebug)
+            * pout << "Switching to normal TAP basic loader" << endl;
+
+        emittapbas(out);
     }
 }
 

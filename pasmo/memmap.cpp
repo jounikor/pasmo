@@ -20,6 +20,7 @@ logic_error MemMapPages("Memory map slots occypy more than 64K of RAM");
 logic_error MemMapBanks("Unsupported memory map bank size");
 logic_error BankOutOfBounds("Invalid memory bank index");
 
+runtime_error MemMapInvalidBank("Current bank index not set");
 runtime_error MemMapROMAccess("Access to a ROM page");
 runtime_error MemMapConverted("Memory map already converted to a flat mem array.");
 runtime_error EmitPagedAsPlain("Accessing paged memory map as a flat mem array is not possible. Check for BANK statements.");
@@ -41,15 +42,15 @@ Bank::Bank()
 
 byte& Bank::operator[](address addr)
 {
-    if (addr >= banksize) {
-        addr &= (banksize-1);
-    }
     if (recordaccess_) {
         if (addr > maxused_) {
             maxused_ = addr;
         } else if (addr < minused_) {
             minused_ = addr;
         }
+    }
+    if (addr >= banksize) {
+        addr &= (banksize-1);
     }
     return mem_[addr];
 }
@@ -61,6 +62,45 @@ Bank::~Bank()
 int MemMap::getnumbanks() const
 {
     return banks_.size();
+}
+
+address MemMap::getcurrentbankminused() const
+{
+#if 1
+    if (mem != NULL) {
+        throw MemMapConverted;
+    }
+#endif
+    if (currentbank_ < 0) {
+        throw MemMapInvalidBank;
+    }
+    return banks_[currentbank_].getminused();
+}
+
+address MemMap::getcurrentbankmaxused() const
+{
+#if 1
+    if (mem != NULL) {
+        throw MemMapConverted;
+    }
+#endif
+    if (currentbank_ < 0) {
+        throw MemMapInvalidBank;
+    }
+    return banks_[currentbank_].getmaxused();
+}
+
+bool MemMap::iscurrentbankused() const
+{
+#if 1
+    if (mem != NULL) {
+        throw MemMapConverted;
+    }
+#endif
+    if (currentbank_ < 0) {
+        throw MemMapInvalidBank;
+    }
+    return banks_[currentbank_].getmaxused() >= banks_[currentbank_].getminused();
 }
 
 byte& MemMap::operator[](address addr)
@@ -79,7 +119,7 @@ byte& MemMap::operator[](address addr)
     if (pages_[page].isbanked) {
         if (currentbank_ < 0) {
             currentbank_ = pages_[page].bank;
-	}
+        }
         if (currentbank_ != pages_[page].bank) {
             pages_[page].gotpaged = true;
             pages_[page].bank = currentbank_;
@@ -96,9 +136,9 @@ byte* const MemMap::operator+(int pos)
     int j, p = 0;
 
     if (mem == NULL) {
-	if (gotpaged_) {
-	    throw EmitPagedAsPlain;
-	}
+        if (gotpaged_) {
+            throw EmitPagedAsPlain;
+        }
 
         mem = new byte[Bank::banksize*4];
 

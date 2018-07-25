@@ -21,7 +21,7 @@ using std::string;
 using std::vector;
 using std::runtime_error;
 
-const string pasmoversion ("0.5.4.beta2i.jik");
+const string pasmoversion ("0.5.4.beta2i.paged");
 
 
 class Usage { };
@@ -435,7 +435,7 @@ int main (int argc, char * * argv)
 	}
 	catch (Usage &)
 	{
-		cerr <<	"Pasmo v. " << pasmoversion <<
+		cerr <<	"Pasmo version " << pasmoversion <<
 			" (C) 2004-2005 Julian Albo\n\n"
 			"Usage:\n\n"
 			"\tpasmo [options] source object [symbol]\n\n"

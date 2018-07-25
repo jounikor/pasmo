@@ -76,6 +76,22 @@ const std::string spectrum::tokPOKE      (1, '\xF4');
 const std::string spectrum::tokRANDOMIZE (1, '\xF9');
 const std::string spectrum::tokCLEAR     (1, '\xFD');
 
+const std::string spectrum::tokREM       (1, '\xEA');
+const std::string spectrum::tokPEEK      (1, '\xBE');
+const std::string spectrum::tokREAD      (1, '\xE3');
+const std::string spectrum::tokDATA      (1, '\xE4');
+const std::string spectrum::tokLET       (1, '\xF1');
+const std::string spectrum::tokSTOP      (1, '\xE2');
+const std::string spectrum::tokVAL       (1, '\xB0');
+const std::string spectrum::tokFOR       (1, '\xEB');
+const std::string spectrum::tokTO        (1, '\xCC');
+const std::string spectrum::tokNEXT      (1, '\xF3');
+const std::string spectrum::tokIF        (1, '\xFA');
+const std::string spectrum::tokTHEN      (1, '\xCB');
+const std::string spectrum::tokGOTO      (1, '\xEC');
+const std::string spectrum::tokGE        (1, '\xC8');
+
+
 std::string spectrum::number (address n)
 {
 	std::ostringstream oss;
@@ -91,6 +107,20 @@ std::string spectrum::number (address n)
 	str+= static_cast <unsigned char> (lobyte (n) );
 	str+= static_cast <unsigned char> (hibyte (n) );
 	str+= '\x00';
+	return str;
+}
+
+std::string spectrum::VALnumber (address n)
+{
+	std::ostringstream oss;
+	oss << n;
+	//std::string str (oss.str () );
+	std::string str;
+	
+    str += tokVAL;
+    str += '\"';
+    str += oss.str();
+    str += '\"';
 	return str;
 }
 

@@ -51,13 +51,13 @@ public:
     void setcurrentbank(int);
     int getcurrentbank() const;
     bool gotpaged() const { return gotpaged_; }
-
     virtual void setmapping(int);
     int getnumbanks() const;
-    
+    address getcurrentbankminused() const;
+    address getcurrentbankmaxused() const;
+    bool iscurrentbankused() const;
     byte& operator[](address);
     byte* const operator+(int); 
-
     void dumpmapping() const;
 };
 

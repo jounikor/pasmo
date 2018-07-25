@@ -44,6 +44,7 @@ public:
 	void emitplus3dos (std::ostream & out);
 
 	void emittap (std::ostream & out);
+    void emitpagedtap (std::ostream & out);
 	void emittzx (std::ostream & out);
 	void emitcdt (std::ostream & out);
 

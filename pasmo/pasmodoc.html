@@ -57,6 +57,7 @@ Current Pasmo version: 0.5.2
 	<li><a href="#codegentzx">--tzx mode.</a></li>
 	<li><a href="#codegencdt">--cdt mode.</a></li>
 	<li><a href="#codegentapbas">--tapbas mode.</a></li>
+	<li><a href="#codegentapbas128">--tapbas128 mode.</a></li>
 	<li><a href="#codegentzxbas">--tzxbas mode.</a></li>
 	<li><a href="#codegencdtbas">--cdtbas mode.</a></li>
 	<li><a href="#codegenplus3dos">--plus3dos mode.</a></li>
@@ -313,6 +314,11 @@ Generate the object file in .cdt format.
 Same as --tap but adding a Basic loader before the code.
 </dd>
 
+<dt>--tapbas128</dt>
+<dd>
+Same as --tapbas but enables banked code generation and loader.
+</dd>
+
 <dt>--tzxbas</dt>
 <dd>
 Same as --txz but adding a Basic loader before the code.
@@ -391,6 +397,10 @@ are used. Makes easy to write programs for 8080 processor using Z80
 assembler syntax.
 </dd>
 
+<dt>--memmap</dt>
+<dd>
+Dumps the paged memory map information and details of all banks.
+</dd>
 </dl>
 
 <p>
@@ -489,6 +499,18 @@ the code, and executes it if a entry point is defined (see the
 <a href="#dirend">END</a>
 directive). That way you can directly launch the code in a emulator,
 or transfer it to a tape for use in a real Spectrum.
+</p>
+
+<h3><a name="codegentapbas128">--tapbas128 mode</a></h3>
+
+<p>
+With the --tapbas128 option a tap file is generated in two or more parts: a Basic loader with a
+banking support and one or more code blocks with the object code. The Basic loader does a CLEAR
+before the initial address of the code, loads the code into appropriate banks (see the <a
+href="#dirbank">BANK</a> directive), and executes it if a entry point is defined (see the <a
+href="#dirend">END</a> directive). That way you can directly launch the code in a emulator, or
+transfer it to a tape for use in a real Spectrum with banking support (i.e., Spectrum128, +2 and
++3).
 </p>
 
 <h3><a name="codegentzxbas">--tzxbas mode</a></h3>
@@ -948,6 +970,26 @@ the result is that code generated overwrites previous, the result is
 undefined.
 </dd>
 
+<dt><a name="dirbank">BANK</a></dt>
+<dd>
+Sets the current active memory bank where code may be generated. Currently banking is only supported
+for ZX Spectrum (128, +2 and +3 non-flat 64K modes). In other targets the BANK does not cause a
+runtime error but has no effect as a flat non-banked memory map is used. The access to an active
+bank is determined from the current "address" i.e., when code is generated within $c000-$ffff
+bounds.  The banking tries to be clever in a sense that code can be written into banks through
+both fixed page slots and through banked page slot 3. For example, in ZX Spectrum128 (see <a
+href="#codegentapbas128">--tapbas128</a> option) the following
+code would generate "Mr.Spiv" to be written into $4000:
+<pre>
+    ORG $4000
+    DB  "Mr."
+
+    BANK 5
+    ORG $c003
+    DB  "Spiv"
+</pre>
+</dd>
+
 <dt><a name="dirproc">PROC</a></dt>
 <dd>
 Marks the begin of a PROC block. The only effect is to define
@@ -1381,9 +1423,13 @@ is supposed to know that), thus the warning is not emitted.<br>
 More suggestions about that are wellcome.
 </p>
 
+<h2><a name="contributions">Contributions</a>.</h2>
 <p>
-There is no way to include a file whose name contains blanks, single
-and double quoutes. Someone use file names like that?
+ (c) 2018 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta2i.paged):
+ <ul>
+   <li>Added BANKed memory support, related directives and command line options. 
+   </li>
+ </ul>
 </p>
 
 <h2><a name="epilogue">Epilogue</a>.</h2>
