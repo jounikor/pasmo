@@ -221,6 +221,8 @@ enum TypeToken {
 	TypeREPT,
 	TypeIRP,
     TypeBANK,
+    TypeSTRUCT,
+    TypeENDS,
 
 	// Directives with .
 	Type_ERROR,

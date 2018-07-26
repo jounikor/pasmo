@@ -89,6 +89,7 @@ Current Pasmo version: 0.5.2
 	<li><a href="#direrror">.ERROR</a></li>
 	<li><a href="#dirshift">.SHIFT</a></li>
 	<li><a href="#dirwarning">.WARNING</a></li>
+	<li><a href="#dirbank">BANK</a></li>
 	<li><a href="#dirdefb">DEFB</a></li>
 	<li><a href="#dirdefl">DEFL</a></li>
 	<li><a href="#dirdefm">DEFM</a></li>
@@ -101,6 +102,7 @@ Current Pasmo version: 0.5.2
 	<li><a href="#direndif">ENDIF</a></li>
 	<li><a href="#direndm">ENDM</a></li>
 	<li><a href="#direndp">ENDP</a></li>
+	<li><a href="#dirends">ENDS</a></li>
 	<li><a href="#direqu">EQU</a></li>
 	<li><a href="#direxitm">EXITM</a></li>
 	<li><a href="#dirif">IF</a></li>
@@ -113,6 +115,7 @@ Current Pasmo version: 0.5.2
 	<li><a href="#dirproc">PROC</a></li>
 	<li><a href="#dirpublic">PUBLIC</a></li>
 	<li><a href="#dirrept">REPT</a></li>
+	<li><a href="#dirstruct">STRUCT</a></li>
 	</ul>
 </li>
 
@@ -832,7 +835,27 @@ Same as <a href="#direrror">.ERROR</a> but emiting a a warning message
 instead of generating an error.
 </dd>
 
-<dd><a name="dirdb">DB</a></dd>
+<dt><a name="dirbank">BANK</a></dt>
+<dd>
+Sets the current active memory bank where code may be generated. Currently banking is only supported
+for ZX Spectrum (128, +2 and +3 non-flat 64K modes). In other targets the BANK does not cause a
+runtime error but has no effect as a flat non-banked memory map is used. The access to an active
+bank is determined from the current "address" i.e., when code is generated within $c000-$ffff
+bounds.  The banking tries to be clever in a sense that code can be written into banks through
+both fixed page slots and through banked page slot 3. For example, in ZX Spectrum128 (see <a
+href="#codegentapbas128">--tapbas128</a> option) the following
+code would generate "Mr.Spiv" to be written into $4000:
+<pre>
+    ORG $4000
+    DB  "Mr."
+
+    BANK 5
+    ORG $c003
+    DB  "Spiv"
+</pre>
+</dd>
+
+<dt><a name="dirdb">DB</a></dt>
 <dd>
 Define Byte. The argument is a comma separated list of string literals
 or numeric expressions. The string literals are inserted in the object
@@ -895,6 +918,12 @@ case may be used for documentation purposes.
 
 <dt><a name="direndp">ENDP</a></dt>
 <dd>Marks the end of a PROC block, see PROC.</dd>
+
+<dt><a name="dirends">ENDS</a></dt>
+<dd>
+Marks the end of a STRUCT block, see <a href="#dirstruct">STRUCT</a>.
+</dd>
+
 
 <dt><a name="direqu">EQU</a></dt>
 <dd>
@@ -970,26 +999,6 @@ the result is that code generated overwrites previous, the result is
 undefined.
 </dd>
 
-<dt><a name="dirbank">BANK</a></dt>
-<dd>
-Sets the current active memory bank where code may be generated. Currently banking is only supported
-for ZX Spectrum (128, +2 and +3 non-flat 64K modes). In other targets the BANK does not cause a
-runtime error but has no effect as a flat non-banked memory map is used. The access to an active
-bank is determined from the current "address" i.e., when code is generated within $c000-$ffff
-bounds.  The banking tries to be clever in a sense that code can be written into banks through
-both fixed page slots and through banked page slot 3. For example, in ZX Spectrum128 (see <a
-href="#codegentapbas128">--tapbas128</a> option) the following
-code would generate "Mr.Spiv" to be written into $4000:
-<pre>
-    ORG $4000
-    DB  "Mr."
-
-    BANK 5
-    ORG $c003
-    DB  "Spiv"
-</pre>
-</dd>
-
 <dt><a name="dirproc">PROC</a></dt>
 <dd>
 Marks the begin of a PROC block. The only effect is to define
@@ -1008,6 +1017,29 @@ identifiers marked as public are included in the symbol table listing.
 <dt><a name="dirrept">REPT</a></dt>
 <dd>
 REPeaTs a block. See <a href="#macros">the chapter about macros</a>.
+</dd>
+
+<dt><a name="dirstruct">STRUCT</a></dt>
+<dd>
+Marks the start of a STRUCT definition. Only space defining directives are allowed within a struct
+i.e., DB, DW, DS, DEFB, DEFM, DEFW, and DEFS. Currently nesting of structs is not supported. Also,
+the "default" values given in a struct definition are plain neglected. The following code:
+<pre>
+    STRUCT foo
+a       DB  3
+b       DW  1
+c       DS  2
+d       BD  1,2,3,4
+    ENDS
+</pre>
+would introduce the follwing labels into the global namespace:
+<pre>
+foo.a with value 0
+foo.b with value 1
+foo.c with value 3
+foo.d with value 5
+foo   with value 9 i.e., the size of the struct.
+</pre>
 </dd>
 
 </dl>
@@ -1425,9 +1457,10 @@ More suggestions about that are wellcome.
 
 <h2><a name="contributions">Contributions</a>.</h2>
 <p>
- (c) 2018 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta2i.paged):
+ (c) 2018 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta3):
  <ul>
    <li>Added BANKed memory support, related directives and command line options. 
+   <li>Added STRUCT support and related directives. 
    </li>
  </ul>
 </p>
