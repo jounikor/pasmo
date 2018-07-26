@@ -67,7 +67,8 @@ logic_error UnexpectedORG ("Unexpected ORG found");
 logic_error UnexpectedSTACK("Unexpected STACK found");
 logic_error UnexpectedMACRO ("Unexpected MACRO found");
 logic_error MACROLostENDM ("Unexpected MACRO without ENDM");
-
+logic_error STRUCTLostENDM ("Unexpected STRUCT without ENDM");
+logic_error STRUCTnested ("Nested STRUCT is not supported yet");
 
 // Errors in the code being assembled.
 
@@ -106,9 +107,11 @@ runtime_error UnbalancedENDP ("Unbalanced ENDP");
 
 runtime_error MACROwithoutENDM ("MACRO without ENDM");
 runtime_error REPTwithoutENDM ("REPT without ENDM");
+runtime_error STRUCTwithoutENDS ("STRUCT without ENDS");
 runtime_error IRPWithoutParameters ("IRP without parameters");
 runtime_error IRPwithoutENDM ("IRP without ENDM");
 runtime_error ENDMOutOfMacro ("ENDM outside of macro");
+runtime_error ENDSOutOfSTRUCT ("ENDS outside of STRUCT");
 
 runtime_error ShiftOutsideMacro (".SHIFT outside MACRO");
 runtime_error InvalidBaseValue ("Invalid base value");
@@ -131,6 +134,25 @@ runtime_error NotValid86 ("Instruction not valid in 86 mode");
 runtime_error IsPredefined ("Can't redefine, is predefined");
 
 runtime_error OutOfSyncPRL ("PRL genration failed: out of sync");
+runtime_error RedefinedSTRUCT("Invalid definition, STRUCT name already defined");
+
+
+class Unimplemented : public logic_error {
+public:
+    Unimplemented (const std::string& what) : 
+        logic_error("Unimplemented function '" + what + "' reached")
+    { }
+};
+
+class STRUCTinvalidToken : public runtime_error {
+public:
+	STRUCTinvalidToken (const Token & tok) :
+		runtime_error ("Token '" + tok.str () +
+			"' not allowed within a STRUCT")
+	{ }
+};
+
+
 
 class NoInstruction : public runtime_error {
 public:
@@ -1022,6 +1044,8 @@ private:
 	void parseORG (Tokenizer & tz,
 		const std::string & label= std::string () );
 	void parseBANK (Tokenizer & tz,
+		const std::string & label= std::string () );
+	void parseSTRUCT (Tokenizer & tz,
 		const std::string & label= std::string () );
 	void parseSTACK(Tokenizer & tz,
 		const std::string & label = std::string());
@@ -2344,6 +2368,15 @@ void Asm::In::parseline (Tokenizer & tz)
 	case TypeBANK:
 		parseBANK (tz);
 		break;
+	case TypeSTRUCT:
+        tok = tz.gettoken();
+        if (tok.type() != TypeIdentifier) {
+            throw IdentifierExpected(tok);
+        } else {
+            const std::string& name = tok.str ();
+		    parseSTRUCT (tz,name);
+        }
+		break;
 	case TypeSTACK:
 		parseSTACK(tz);
 		break;
@@ -2669,6 +2702,8 @@ void Asm::In::parsegeneric (Tokenizer & tz, Token tok)
 		break;
 	case TypeENDM:
 		throw ENDMOutOfMacro;
+    case TypeENDS:
+		throw ENDSOutOfSTRUCT;
 	case TypeIM:
 		parseIM (tz);
 		break;
@@ -3146,7 +3181,7 @@ void Asm::In::parselabel (Tokenizer & tz, const std::string & name)
 		// Now can't come here.
 		ASSERT (false);
 		break;
-	default:
+    default:
 		// In any other case, generic label. Assign the
 		// current position to it and parse the rest
 		// of the line.
@@ -3154,6 +3189,120 @@ void Asm::In::parselabel (Tokenizer & tz, const std::string & name)
 		parsegeneric (tz, tok);
 	}
 }
+
+void Asm::In::parseSTRUCT (Tokenizer & tz, const std::string & name)
+{
+    // STRUCT is implemented as a '   STRUCT name' that just exports some labels
+    // into the global name space..
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+
+    *pout << "Defining STRUCT " << name << "\n";
+    ASSERT(!name.empty());
+
+    // Not sure it this is needed..
+	if (autolocalmode)
+	{
+		finishautolocal ();
+		if (isautolocalname (name) )
+			throw InvalidInAutolocal;
+	}
+
+    // label will hold the names put into global namespace..
+    std::string::size_type l;
+    std::string label;
+    address count = 0;
+
+	// Parse STRUCT body.
+	size_t level= 1;
+	size_t structline= getline ();
+
+	while (nextline () ) {
+		Tokenizer & tz (getcurrentline () );
+		Token tok= tz.gettoken ();
+		TypeToken tt= tok.type ();
+		if (tt == TypeENDS) {
+			if (--level == 0)
+				break;
+		}
+		if (tt == TypeIdentifier) {
+            // Only STRUCT and space defining tokens allowed i.e..
+            // DB, WD, DS, DEFB, DEFW, DEFS, DEFM..
+            // Needed space is calculated and the actual values are discarded.
+            
+            label = name + "." + tok.str();
+			tok= tz.gettoken ();
+			tt= tok.type ();
+            *pout << "                " << label << " = " << count <<  "\n";
+            setequorlabel(label,count);
+
+            switch (tt) {
+            case TypeDEFB:
+            case TypeDB:
+            case TypeDEFM:
+                for (;;) {
+                    tok = tz.gettoken();
+		            switch (tok.type ()) {
+		            case TypeLiteral:
+                        l = tok.str().size();
+			            break;
+		            default:
+			            l = 1;
+		            }
+                    
+                    count += l;
+
+		            tok= tz.gettoken ();
+		            if (tok.type () == TypeEndLine)
+			            break;
+		            checktoken (TypeComma, tok);
+                }
+                break;
+            case TypeDEFW:
+            case TypeDW:
+	            for (;;) {
+                    tok= tz.gettoken ();
+                    count += 2;
+                    tok= tz.gettoken ();
+                    if (tok.type () == TypeEndLine) {
+                        break;
+                    }
+                    checktoken (TypeComma, tok);
+                }
+                break;
+            case TypeDEFS:
+            case TypeDS:
+                tok= tz.gettoken ();
+                count += parseexpr (true, tok, tz);
+                break;
+            default:
+                throw STRUCTinvalidToken(tok);
+            }
+        } else if (tt == TypeSTRUCT) {
+            // currently no support for nested structures..
+			throw STRUCTnested;
+            ++level;
+        } else {
+            throw STRUCTinvalidToken(tok);
+            //*pout << "Skipping '" << tok.str() << "' inside STRUCT " << name << "\n"; 
+        }
+	}
+	if (passeof () ) {
+		setline (structline);
+		throw STRUCTwithoutENDS;
+	}
+
+    *pout << "                " << name << " = " << count <<  "\n";
+    setequorlabel(name,count);
+}
+
 
 void Asm::In::parseMACRO (Tokenizer & tz, const std::string & name,
 	bool needcomma)
