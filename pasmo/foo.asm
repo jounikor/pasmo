@@ -7,7 +7,6 @@ testt    MACRO sBANK,src
         DW  sBANK,src
         ENDM
 
-    ENDS
 
         STRUCT foo
 buz     db  3
@@ -27,6 +26,14 @@ zzz     ds foof
 
 
 main:
+    ld  a,(ix-2)
+    ld  a,(ix+2)
+    ld  a,(iy-2)
+    ld  a,(ix+2-1-3-2-4-3)
+    ld  a,(ix-10)
+    ld  a,(ix+10-5-10+foo.bar)
+    ld  a,(iy-10-5-10)
+
     ld  hl,main
     ld  a,(test.foo)
     ret

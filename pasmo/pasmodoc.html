@@ -96,7 +96,9 @@ Current Pasmo version: 0.5.2
 	<li><a href="#dirdefs">DEFS</a></li>
 	<li><a href="#dirdefw">DEFW</a></li>
 	<li><a href="#dirds">DS</a></li>
+	<li><a href="#dirdup">DUP</a></li>
 	<li><a href="#dirdw">DW</a></li>
+	<li><a href="#diredup">EDUP</a></li>
 	<li><a href="#direlse">ELSE</a></li>
 	<li><a href="#dirend">END</a></li>
 	<li><a href="#direndif">ENDIF</a></li>
@@ -890,11 +892,20 @@ in bytes. The second is the value used to fill the space,
 if absent 0 will be used.
 </dd>
 
+<dt><a name="dirdup">DUP</a></dt>
+<dd>
+Equivalent to <a href="#dirrept">REPT</a>. This is for sjasm compatability.
+</dd>
+
 <dt><a name="dirdw">DW</a></dt>
 <dd>
 Define Word. The argument is a comma separated list of numeric
 expressions. Each numeric expression is evaluated as a two byte word
 and the result inserted in the code in the Z80 word format.
+</dd>
+
+<dt><a name="diredup">EDUP</a></dt>
+<dd>Equivalent to <a href="#direndm">ENDM</a>. This is for sjasm compatibility.
 </dd>
 
 <dt><a name="direlse">ELSE</a></dt>
@@ -1441,8 +1452,15 @@ The same may be done for the other formats supported.
 </p>
 
 <h2><a name="bugs">Bugs</a>.</h2>
-
 <p>
+Pasmo has issues with IX and IY register index calculation. Specifically e.g., (IX-12+13) would
+generate code that is equivalent to (IX+25). This can be "fixed" writing the same as (IX+13-12),
+which then generates code that is correct i.e., (IX+1).
+IX and IY index calculation has also been changed now so that indices greater than 127 or smaller
+than -128 will generate an error. Earlier it was possible to write e.g., (IX+255), which would have
+generated code equivalent to (IX-1).
+</br>
+</br>
 Pasmo emits a warning when using a expression that looks line a non
 existent z80 instruction, such as 'ld b, (nn)', but the simplified
 way used to detect that also warns in cases like
@@ -1460,7 +1478,9 @@ More suggestions about that are wellcome.
  (c) 2018 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta3):
  <ul>
    <li>Added BANKed memory support, related directives and command line options. 
-   <li>Added STRUCT support and related directives. 
+   <li>Added STRUCT/ENDS support and related directives. 
+   <li>Added DUP/EDUP support. 
+   <li>Modified IX and IY index calculations, see <a href="#bugs">Bugs</a>. 
    </li>
  </ul>
 </p>

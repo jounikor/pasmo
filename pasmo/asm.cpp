@@ -3408,27 +3408,60 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
 	case TypePlus:
 		tok= tz.gettoken ();
 		{
-			address addr= parseexpr (false, tok, tz);
+			address addr = parseexpr (false, tok, tz);
+            desp = addr & 0xff;
+            *pout << "TypePlus IX or IY index is " << addr << 
+                " ($" << hex2str(desp) << ")\n";
+
+            // Note.. this changes the index handling from the 0.5.4 PASMO in a way
+            // that positive numbers greater than 127 will create an error..
+
+            if (addr >= 32768) {
+                // Plays a trick as 1s complement is actually 2s complement - 1
+                // so the following compare to 127 work for both positive and
+                // negatived indices..
+                addr ^= 0xffff;
+            }
+            if (addr > 127) {
+                throw OffsetOutOfRange;
+            }
+
 			// We allow positive greater than 127 just in
 			// case someone uses hexadecimals such as 0FFh
 			// as offsets.
-			if (addr > 255)
-				throw OffsetOutOfRange;
-			desp= static_cast <byte> (addr);
+			//if (addr > 255)
+			//	throw OffsetOutOfRange;
+			//desp= static_cast <byte> (addr);
 			expectcloseindir (tz, bracket);
 		}
 		break;
-	case TypeMinus:
+    case TypeMinus:
+        // TODO: The (IX-something) has an tokenizer + parseexpr issue
+        // for example the followin (IX-12+13) produces address of 25
+        // although it should be 1.. to be fixed some day.
+
 		tok= tz.gettoken ();
 		{
 			address addr= parseexpr (false, tok, tz);
-			if (addr > 128)
-				throw OffsetOutOfRange;
-			desp= static_cast <byte> (256 - addr);
+            desp = -addr & 0xff;
+            *pwarn << "Warning: TypeMinus IX or IY index " << addr << 
+                " ($" << hex2str(desp) << ") is potentially wrong at line "
+                << getline() << "\n";
+            
+            if (addr >= 32768) {
+                addr = -addr + 1;
+            }
+            if (addr > 128) {
+                throw OffsetOutOfRange;
+            }
+			
+            //if (addr > 128)
+			//	throw OffsetOutOfRange;
+			//desp= static_cast <byte> (256 - addr);
 			expectcloseindir (tz, bracket);
 		}
 		break;
-	default:
+    default:
 		throw OffsetExpected (tok);
 	}
 	return desp;
