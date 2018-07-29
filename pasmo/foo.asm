@@ -19,11 +19,7 @@ zzz     ds foof
 
 
 
-    ORG $8000
-
-
-
-
+    ORG $8000       ; -> fixed at BANK2
 
 main:
     ld  a,(ix-2)
@@ -55,7 +51,7 @@ bank4:
     ret
     
     BANK    2
-    ;ORG     $c000
+    ORG     $c008
 bank5:
     ld  bc,bank5
     ld  ix,dataa
@@ -67,6 +63,9 @@ bank5:
 
 
 dataa:
+    ds  foo
+    ds  foo
+    ds  foo
     ds  foo
 
 

@@ -8,6 +8,10 @@
 
 #include <vector>
 
+#define BANKSIZE 16384
+#define BANKMASK (BANKSIZE-1)
+#define NUMPAGES 4
+
 //
 
 struct Page {
@@ -20,7 +24,8 @@ struct Page {
 
 class Bank {
 private:
-    byte mem_[16384];   // shortcut.. force 16K pages.
+    byte mem_[BANKSIZE];    // shortcut.. force 16K pages.
+                            // should be dynamically allocated.
     address minused_;
     address maxused_;
     bool recordaccess_;
@@ -39,7 +44,7 @@ public:
 
 class MemMap {
 private:
-    Page pages_[4];
+    Page pages_[NUMPAGES];
     std::vector<Bank> banks_;
     bool gotpaged_;
     int currentbank_;
@@ -56,6 +61,7 @@ public:
     address getcurrentbankminused() const;
     address getcurrentbankmaxused() const;
     bool iscurrentbankused() const;
+    address getcurrentbankused() const;
     byte& operator[](address);
     byte* const operator+(int); 
     void dumpmapping() const;

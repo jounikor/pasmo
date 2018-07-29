@@ -6533,13 +6533,20 @@ void Asm::In::emitpagedtap (std::ostream & out)
             
             minused = mem.getcurrentbankminused();
             maxused = mem.getcurrentbankmaxused();
-            codesize = maxused - minused + 1;
-            
-            // check for a case where the same bank is accessed from through
-            // fixed page and swappable page i.e., codesize cannot be
-            // larger than the bank size..
-            codesize &= (Bank::banksize-1);
-            
+            codesize = mem.getcurrentbankused();
+           
+            // Check for a case where a BANK is accessed through both a fixed page
+            // and a banked page. If a banked page was used then bank switching
+            // code is generated although loading may still be done into the
+            // fixed page address.. does not really matter regarding the end
+            // result.
+
+            if (((minused ^ maxused) & ~(Bank::banksize-1)) != 0) {
+                *pwarn << "Warning: BANK " << bank << " was accesses through both "
+                    << "fixed and banked pages (minused: $" << hex4(minused) << ", "
+                    "maxused: $" << hex4(maxused) << ")\n";
+            }
+
             //
             headername = "bank" + oss.str() + ".tap";
 
@@ -6594,7 +6601,6 @@ void Asm::In::emittzx (std::ostream & out)
 
 	writetzxcode (out);
 }
-
 void Asm::In::writecdtcode (std::ostream & out)
 {
 	const address codesize= getcodesize ();

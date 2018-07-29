@@ -515,7 +515,13 @@ before the initial address of the code, loads the code into appropriate banks (s
 href="#dirbank">BANK</a> directive), and executes it if a entry point is defined (see the <a
 href="#dirend">END</a> directive). That way you can directly launch the code in a emulator, or
 transfer it to a tape for use in a real Spectrum with banking support (i.e., Spectrum128, +2 and
-+3).
++3).</br>
+Note that the current bank in the banked page slot is left to an "implementation dependant" bank
+number after the basic loader has finished. This mean the active bank number can be any of the <a
+href="#dirbank">BANK</a> values used in the code. The startup code should set the bank to a desired
+value. The basic loader does keep the system variable BANKM (23388) updated with the latest bank
+number and I/O port $7ffd (32765) value. The basic loader uses system variable RASP (23608) to pass
+the bank number from basic to the bank switching code.
 </p>
 
 <h3><a name="codegentzxbas">--tzxbas mode</a></h3>
@@ -855,6 +861,12 @@ code would generate "Mr.Spiv" to be written into $4000:
     ORG $c003
     DB  "Spiv"
 </pre>
+However, be warned that accessing a bank through both a fixed page and a banked page may generate
+code that was not what you intended. The overlap may be partial or entire and result to unexpected
+behaviour.
+</br>
+Currently BANK values from 0 to 7 are supported i.e., allowing a maximum 128K memory map. The banked
+TAP loader uses bank number 8 as an end value for bank loading.
 </dd>
 
 <dt><a name="dirdb">DB</a></dt>

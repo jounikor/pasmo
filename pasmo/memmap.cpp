@@ -26,7 +26,7 @@ runtime_error MemMapConverted("Memory map already converted to a flat mem array.
 runtime_error EmitPagedAsPlain("Accessing paged memory map as a flat mem array is not possible. Check for BANK statements.");
 
 //
-const int Bank::banksize = 1<<14;   // 16384
+const int Bank::banksize = BANKSIZE;   // 16384
 
 void Bank::init()
 {
@@ -42,10 +42,14 @@ Bank::Bank()
 
 byte& Bank::operator[](address addr)
 {
+    address ta = addr & (banksize-1);
+    address mi = minused_ & (banksize-1);
+    address ma = maxused_ & (banksize-1);
+
     if (recordaccess_) {
-        if (addr > maxused_) {
+        if (ta > ma) {
             maxused_ = addr;
-        } else if (addr < minused_) {
+        } else if (ta < mi) {
             minused_ = addr;
         }
     }
@@ -100,7 +104,26 @@ bool MemMap::iscurrentbankused() const
     if (currentbank_ < 0) {
         throw MemMapInvalidBank;
     }
-    return banks_[currentbank_].getmaxused() >= banks_[currentbank_].getminused();
+    return !((banks_[currentbank_].getmaxused() == 0x0000)
+        && (banks_[currentbank_].getminused() == 0xffff));
+}
+
+address MemMap::getcurrentbankused() const
+{
+    address mi = banks_[currentbank_].getminused() & (Bank::banksize-1);
+    address ma = banks_[currentbank_].getmaxused() & (Bank::banksize-1);
+#if 1
+    if (mem != NULL) {
+        throw MemMapConverted;
+    }
+#endif
+    if (currentbank_ < 0) {
+        throw MemMapInvalidBank;
+    }
+    if (!iscurrentbankused()) {
+        return 0;
+    }
+    return ma-mi+1;
 }
 
 byte& MemMap::operator[](address addr)
