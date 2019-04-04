@@ -6878,12 +6878,42 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         23608 -> lenght of a warning buzz (used to pass parameters)
         23388 -> last page address
         23635 -> address of basic program
+
+-----
+
+;returns the next parameter in BC
+;at exit, NZ is set if there are no more parameters
+GetParam
+        DI                  243
+        RST $18	            223         ;GET CHAR
+        ;CP ','		    ;#2C
+        ;RET NZ
+        RST $20	            231         ;NEXT CHAR
+        CALL $24FB	        205,251,36  ;EXPRESSION -> CALC STACK
+        CALL $2DA2	        205,162,45  ;CALC STACK TOP -> BC
+        ; 
+        LD  A,(23388)       58,92,91
+        AND $F8             230,248
+        OR  C               177
+        LD  (23388), A      50,92,91
+        LD  A,C             121
+        LD  BC, $7FFD       1,253,127
+        OUT (C), A          237,121
+        ; 
+        XOR A		        175         ;SET Z
+        EI                  251
+        RET                 201 -> 27
+
+his worked also:
+LET a=10
+PRINT USR 32768,a
+
 #endif
         std::string basic;
         int bank;
 
-        // 10 REM 012345678901234567890
-        std::string line = tokREM + "012345678901234567890";
+        // 10 REM 012345678901234567890123456
+        std::string line = tokREM + "012345678901234567890123456";
         basic+= basicline (10, line);
         
         // 20 CLEAR VAL "00000": LET c=(PEEK VAL "23635"+VAL "256"*PEEK VAL "23636")+VAL "5"
@@ -6891,8 +6921,8 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
              + '+' + VALnumber(256) + '*' + tokPEEK + VALnumber(23636) + ")+" + VALnumber(5);
         basic+= basicline (20, line);
         
-        // 30 FOR n = VAL "0" TO VAL "20": READ x: POKE c+n,x: NEXT n
-        line = tokFOR + "n=" + VALnumber(0) + tokTO + VALnumber(20) + ':' + tokREAD + "x:" \
+        // 30 FOR n = VAL "0" TO VAL "26": READ x: POKE c+n,x: NEXT n
+        line = tokFOR + "n=" + VALnumber(0) + tokTO + VALnumber(26) + ':' + tokREAD + "x:" \
              + tokPOKE + "c+n,x:" + tokNEXT + 'n';
         basic += basicline(30,line);
 
@@ -6900,12 +6930,12 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         line = tokREAD + 'b';
         basic += basicline(40,line);
         
-        // 50 IF b < VAL"8" THEN POKE VAL "23608",b: RANDOMIZE USR c: LOAD "" CODE
-        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPOKE + VALnumber(23608) \
-             + ",b:" + tokRANDOMIZE + tokUSR + "c:" + tokLOAD + "\"\"" + tokCODE;
+        // 50 IF b < VAL"8" THEN PRINT USR c,b: LOAD "" CODE
+        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPRINT +  tokUSR + "c,b:" \
+            + tokLOAD + "\"\"" + tokCODE;
         basic += basicline(50,line);
 
-        // 60 IF b = VAL"8" THEN READ a: RANDOMIZE USR VAL "00000": STOP
+        // 60 IF b = VAL"8" THEN READ a: PRINT USR VAL "00000",a: STOP
         line = tokIF + "b=" + VALnumber(8) + tokTHEN;
         
         if (hasentrypoint) {
@@ -6920,21 +6950,27 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         line = tokGOTO + VALnumber(40);
         basic += basicline(70,line);
 
-        // 100 DATA VAL"243", VAL"58", VAL"92", VAL"91", VAL"230", VAL"248", VAL"71"
-        line = tokDATA + VALnumber(243) + ',' + VALnumber(58) + ',' + VALnumber(92) + ',' \
-             + VALnumber(91) + ',' + VALnumber(230) + ',' + VALnumber(248) + ',' + VALnumber(71);
+        // 100 DATA VAL"243", VAL"223", VAL"231", VAL"205", VAL"251", VAL"36", VAL"205"
+        line = tokDATA + VALnumber(243) + ',' + VALnumber(223) + ',' + VALnumber(231) + ',' \
+             + VALnumber(205) + ',' + VALnumber(251) + ',' + VALnumber(36) + ',' + VALnumber(205);
         basic += basicline(100,line);
         
-        // 101 DATA VAL  "58", VAL  "56", VAL  "92", VAL "176", VAL  "50", VAL  "92", VAL  "91"
-        line = tokDATA + VALnumber(58) + ',' + VALnumber(56) + ',' + VALnumber(92) + ',' \
-             + VALnumber(176) + ',' + VALnumber(50) + ',' + VALnumber(92) + ',' + VALnumber(91);
+        // 101 DATA VAL  "162", VAL  "45", VAL  "58", VAL "92", VAL  "91", VAL  "230", VAL  "248"
+        line = tokDATA + VALnumber(162) + ',' + VALnumber(45) + ',' + VALnumber(58) + ',' \
+             + VALnumber(92) + ',' + VALnumber(91) + ',' + VALnumber(230) + ',' + VALnumber(248);
         basic += basicline(101,line);
         
-        // 102 DATA VAL   "1", VAL "253", VAL "127", VAL "237", VAL "121", VAL "251", VAL "201"
-        line = tokDATA + VALnumber(1) + ',' + VALnumber(253) + ',' + VALnumber(127) + ',' \
-             + VALnumber(237) + ',' + VALnumber(121) + ',' + VALnumber(251) + ',' + VALnumber(201);
+        // 102 DATA VAL   "177", VAL "50", VAL "92", VAL "91", VAL "121", VAL "1", VAL "253"
+        line = tokDATA + VALnumber(177) + ',' + VALnumber(50) + ',' + VALnumber(92) + ',' \
+             + VALnumber(91) + ',' + VALnumber(121) + ',' + VALnumber(1) + ',' + VALnumber(253);
         basic += basicline(102,line);
        
+        // 103 DATA VAL   "127", VAL "237", VAL "121", VAL "175", VAL "251", VAL "201"
+        line = tokDATA + VALnumber(127) + ',' + VALnumber(237) + ',' + VALnumber(121) + ',' \
+             + VALnumber(175) + ',' + VALnumber(251) + ',' + VALnumber(201);
+        basic += basicline(103,line);
+
+
         // output as many data entries as there are banks.. there is atleast one..
         // 110 DATA VAL "0", ...
         line = tokDATA;

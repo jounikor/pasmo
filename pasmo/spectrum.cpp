@@ -90,6 +90,7 @@ const std::string spectrum::tokIF        (1, '\xFA');
 const std::string spectrum::tokTHEN      (1, '\xCB');
 const std::string spectrum::tokGOTO      (1, '\xEC');
 const std::string spectrum::tokGE        (1, '\xC8');
+const std::string spectrum::tokPRINT     (1, '\xF5');
 
 
 std::string spectrum::number (address n)

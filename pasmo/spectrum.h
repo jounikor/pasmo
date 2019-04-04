@@ -47,6 +47,7 @@ extern const std::string tokIF;
 extern const std::string tokTHEN;
 extern const std::string tokGOTO;
 extern const std::string tokGE;
+extern const std::string tokPRINT;
 
 std::string number (address n);
 std::string VALnumber (address n);
