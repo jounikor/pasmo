@@ -110,7 +110,6 @@ const NameType nt []= {
 	NT (EI),
 	NT (EX),
 	NT (EXX),
-    NT (FILLDE),    // *
 	NT (HALT),
 	NT (IM),
 	NT (IN),
@@ -126,16 +125,7 @@ const NameType nt []= {
 	NT (LDDR),
 	NT (LDI),
 	NT (LDIR),
-    NT (LDIX),      // *
-    NT (LDIRX),     // *
-    NT (LDDX),      // *
-    NT (LDDRX),     // *
-    NT (LDIRSCALE), // *
-    NT (LDPIRX),    // *
-    NT (MIRROR),    // *
-    NT (MUL),       // *
 	NT (NEG),
-    NT (NEXTREG),   // *
 	NT (NOP),
 	NT (OR),
 	NT (OTDR),
@@ -143,11 +133,7 @@ const NameType nt []= {
 	NT (OUT),
 	NT (OUTD),
 	NT (OUTI),
-    NT (OUTINB),    // *
-    NT (PIXELDN),   // *
-    NT (PIXELAD),   // *
 	NT (POP),
-    NT (POPX),      // *
 	NT (PUSH),
 	NT (RES),
 	NT (RET),
@@ -167,14 +153,11 @@ const NameType nt []= {
 	NT (SBC),
 	NT (SCF),
 	NT (SET),
-    NT (SETAE),     // *
 	NT (SLA),
 	NT (SLL),
 	NT (SRA),
 	NT (SRL),
 	NT (SUB),
-    NT (SWAPNIB),   // *
-    NT (TEST),      // *
 	NT (XOR),
 
 	// Registers.
@@ -188,7 +171,6 @@ const NameType nt []= {
 	NT (D),
 	NT (E),
 	NT (DE),
-	NT (DEHL),
 	NT (H),
 	NT (L),
 	NT (HL),
