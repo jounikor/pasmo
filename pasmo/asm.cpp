@@ -6863,85 +6863,80 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         using namespace spectrum;
 
 #if 0
-        DI                   243
-        LD  A,(23388)        58,92,91
-        AND $F8              230,248
-        LD  B,A              71
-        LD  A,(23608)        58,56,92
-        OR  B                176
-        LD  (23388), A       50,92,91
-        LD  BC, $7FFD        1,253,127
-        OUT (C), A           237,121
-        EI                   251
-        RET                  201  -> 21 kpl
-
         23608 -> lenght of a warning buzz (used to pass parameters)
         23388 -> last page address
         23635 -> address of basic program
+
+        DI                  243
+        RST $18	            223         ;GET CHAR
+        ;CP ','		    ;#2C
+        ;RET NZ
+        RST $20	            231         ;NEXT CHAR
+        CALL $24FB	        205,251,36  ;EXPRESSION -> CALC STACK
+        CALL $2DA2	        205,162,45  ;CALC STACK TOP -> BC
+        ; 
+        LD  A,(23388)       58,92,91
+        AND $F8             230,248
+        OR  C               177
+        LD  (23388), A      50,92,91
+        LD  A,C             121
+        LD  BC, $7FFD       1,253,127
+        OUT (C), A          237,121
+        ; 
+        XOR A		        175         ;SET Z
+        EI                  251
+        RET                 201 -> 27
+
 #endif
         std::string basic;
         int bank;
 
-        // 10 REM 012345678901234567890
-        std::string line = tokREM + "012345678901234567890";
-        basic+= basicline (10, line);
-        
+        // 10 REM 012345678901234567890123456
+        //std::string line = tokREM + "012345678901234567890123456";
+        std::string line = tokREM + char(243) + char(223) + char(231)  \
+            + char(205) + char(251) + char(36) + char(205) + char(162) + char(45) + char(58) \
+            + char(92) + char(91) + char(230) + char(248) + char(177) + char(50) + char(92) \
+            + char(91) + char(121) + char(1) + char(253) + char(127) + char(237) + char(121) \
+            + char(175) + char(251) + char(201);
+
+            basic+= basicline (10, line);
+
         // 20 CLEAR VAL "00000": LET c=(PEEK VAL "23635"+VAL "256"*PEEK VAL "23636")+VAL "5"
         line = tokCLEAR + VALnumber (minused-1) + ':' + tokLET + "c=(" + tokPEEK + VALnumber (23635) \
-             + '+' + VALnumber(256) + '*' + tokPEEK + VALnumber(23636) + ")+" + VALnumber(5);
+               + '+' + VALnumber(256) + '*' + tokPEEK + VALnumber(23636) + ")+" + VALnumber(5);
         basic+= basicline (20, line);
-        
-        // 30 FOR n = VAL "0" TO VAL "20": READ x: POKE c+n,x: NEXT n
-        line = tokFOR + "n=" + VALnumber(0) + tokTO + VALnumber(20) + ':' + tokREAD + "x:" \
-             + tokPOKE + "c+n,x:" + tokNEXT + 'n';
-        basic += basicline(30,line);
 
         // 40 READ b
         line = tokREAD + 'b';
         basic += basicline(40,line);
-        
-        // 50 IF b < VAL"8" THEN POKE VAL "23608",b: RANDOMIZE USR c: LOAD "" CODE
-        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPOKE + VALnumber(23608) \
-             + ",b:" + tokRANDOMIZE + tokUSR + "c:" + tokLOAD + "\"\"" + tokCODE;
+
+        // 50 IF b < VAL"8" THEN PRINT USR c,b: LOAD "" CODE
+        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPRINT +  tokUSR + "c,b:" \
+               + tokLOAD + "\"\"" + tokCODE;
         basic += basicline(50,line);
 
-        // 60 IF b = VAL"8" THEN READ a: RANDOMIZE USR VAL "00000": STOP
+        // 60 IF b = VAL"8" THEN READ a: PRINT USR VAL "00000",a: STOP
         line = tokIF + "b=" + VALnumber(8) + tokTHEN;
-        
+
         if (hasentrypoint) {
-                // Line: 40 RANDOMIZE USR entry_point
+            // Line: 40 RANDOMIZE USR entry_point
             line = line + tokRANDOMIZE + tokUSR + VALnumber(entrypoint) + ':';
         }
 
         line += tokSTOP;
         basic += basicline(60,line);
-        
+
         // 70 GO TO VAL "40"
         line = tokGOTO + VALnumber(40);
         basic += basicline(70,line);
 
-        // 100 DATA VAL"243", VAL"58", VAL"92", VAL"91", VAL"230", VAL"248", VAL"71"
-        line = tokDATA + VALnumber(243) + ',' + VALnumber(58) + ',' + VALnumber(92) + ',' \
-             + VALnumber(91) + ',' + VALnumber(230) + ',' + VALnumber(248) + ',' + VALnumber(71);
-        basic += basicline(100,line);
-        
-        // 101 DATA VAL  "58", VAL  "56", VAL  "92", VAL "176", VAL  "50", VAL  "92", VAL  "91"
-        line = tokDATA + VALnumber(58) + ',' + VALnumber(56) + ',' + VALnumber(92) + ',' \
-             + VALnumber(176) + ',' + VALnumber(50) + ',' + VALnumber(92) + ',' + VALnumber(91);
-        basic += basicline(101,line);
-        
-        // 102 DATA VAL   "1", VAL "253", VAL "127", VAL "237", VAL "121", VAL "251", VAL "201"
-        line = tokDATA + VALnumber(1) + ',' + VALnumber(253) + ',' + VALnumber(127) + ',' \
-             + VALnumber(237) + ',' + VALnumber(121) + ',' + VALnumber(251) + ',' + VALnumber(201);
-        basic += basicline(102,line);
-       
         // output as many data entries as there are banks.. there is atleast one..
         // 110 DATA VAL "0", ...
         line = tokDATA;
 
         for (bank = 0;  bank < mem.getnumbanks(); bank++) {
             mem.setcurrentbank(bank);
-            
+
             if (mem.iscurrentbankused()) {
                 line += VALnumber(bank);
                 line += ',';
@@ -6958,21 +6953,21 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
 
 void Asm::In::emittapbas (std::ostream & out)
 {
-	if (debugtype != NoDebug)
-		* pout << "Emiting TAP basic loader" << endl;
+    if (debugtype != NoDebug)
+        * pout << "Emiting TAP basic loader" << endl;
 
-	// Prepare the data.
+    // Prepare the data.
 
-	std::string basic (spectrumbasicloader () );
-	tap::BasicHeader basicheadblock (basic);
-	tap::BasicBlock basicblock (basic);
+    std::string basic (spectrumbasicloader () );
+    tap::BasicHeader basicheadblock (basic);
+    tap::BasicBlock basicblock (basic);
 
-	// Write the file.
+    // Write the file.
 
-	basicheadblock.write (out);
-	basicblock.write (out);
+    basicheadblock.write (out);
+    basicblock.write (out);
 
-	emittap (out);
+    emittap (out);
 }
 
 void Asm::In::emittapbas128(std::ostream & out)
@@ -6980,7 +6975,7 @@ void Asm::In::emittapbas128(std::ostream & out)
     if (mem.gotpaged()) {
         if (debugtype != NoDebug)
             * pout << "Emiting TAP 128K basic loader" << endl;
-        
+
         std::string basic (spectrumpagedbasicloader () );
         tap::BasicHeader basicheadblock (basic);
         tap::BasicBlock basicblock (basic);
@@ -7002,214 +6997,214 @@ void Asm::In::emittapbas128(std::ostream & out)
 
 void Asm::In::emittzxbas (std::ostream & out)
 {
-	if (debugtype != NoDebug)
-		* pout << "Emiting TZX with basic loader" << endl;
+    if (debugtype != NoDebug)
+        * pout << "Emiting TZX with basic loader" << endl;
 
-	// Prepare the data.
+    // Prepare the data.
 
-	std::string basic (spectrumbasicloader () );
-	tap::BasicHeader basicheadblock (basic);
-	tap::BasicBlock basicblock (basic);
+    std::string basic (spectrumbasicloader () );
+    tap::BasicHeader basicheadblock (basic);
+    tap::BasicBlock basicblock (basic);
 
-	// Write the file.
+    // Write the file.
 
-	tzx::writefilehead (out);
+    tzx::writefilehead (out);
 
-	tzx::writestandardblockhead (out);
-	basicheadblock.write (out);
+    tzx::writestandardblockhead (out);
+    basicheadblock.write (out);
 
-	tzx::writestandardblockhead (out);
-	basicblock.write (out);
+    tzx::writestandardblockhead (out);
+    basicblock.write (out);
 
-	writetzxcode (out);
+    writetzxcode (out);
 }
 
 void Asm::In::emithex (std::ostream & out)
 {
-	message_emit ("Intel HEX");
+    message_emit ("Intel HEX");
 
-	address end= maxused + 1;
-	for (address i= minused; i < end; i+= 16)
-	{
-		address len= end - i;
-		if (len > 16)
-			len= 16;
-		out << ':' << hex2 (lobyte (len) ) << hex4 (i) << "00";
-		byte sum= len + ( (i >> 8) & 0xFF) + i & 0xFF;
-		for (address j= 0; j < len; ++j)
-		{
-			byte b= mem [i + j];
-			out << hex2 (b);
-			sum+= b;
-		}
-		out << hex2 (lobyte (0x100 - sum) );
-		out << "\r\n";
-	}
-	out << ":00000001FF\r\n";
+    address end= maxused + 1;
+    for (address i= minused; i < end; i+= 16)
+    {
+        address len= end - i;
+        if (len > 16)
+            len= 16;
+        out << ':' << hex2 (lobyte (len) ) << hex4 (i) << "00";
+        byte sum= len + ( (i >> 8) & 0xFF) + i & 0xFF;
+        for (address j= 0; j < len; ++j)
+        {
+            byte b= mem [i + j];
+            out << hex2 (b);
+            sum+= b;
+        }
+        out << hex2 (lobyte (0x100 - sum) );
+        out << "\r\n";
+    }
+    out << ":00000001FF\r\n";
 
-	if (! out)
-		throw ErrorOutput;
+    if (! out)
+        throw ErrorOutput;
 }
 
 void Asm::In::emitamsdos (std::ostream & out)
 {
-	message_emit ("Amsdos");
+    message_emit ("Amsdos");
 
-	address codesize= getcodesize ();
+    address codesize= getcodesize ();
 
-	cpc::AmsdosHeader head (headername);
-	head.setlength (codesize);
-	head.setloadaddress (minused);
-	if (hasentrypoint)
-		head.setentry (entrypoint);
+    cpc::AmsdosHeader head (headername);
+    head.setlength (codesize);
+    head.setloadaddress (minused);
+    if (hasentrypoint)
+        head.setentry (entrypoint);
 
-	head.write (out);
+    head.write (out);
 
-	// Write code.
-	writebincode (out);
+    // Write code.
+    writebincode (out);
 
-	if (! out)
-		throw ErrorOutput;
+    if (! out)
+        throw ErrorOutput;
 }
 
 void Asm::In::emitmsx (std::ostream & out)
 {
-	message_emit ("MSX");
+    message_emit ("MSX");
 
-	// Header of an MSX BLOADable disk file.
-	byte header [7]= { 0xFE }; // Header identification byte.
-	// Start address.
-	header [1]= minused & 0xFF;
-	header [2]= minused >> 8;
-	// End address.
-	header [3]= maxused & 0xFF;
-	header [4]= maxused >> 8;
-	// Exec address.
-	address entry= 0;
-	if (hasentrypoint)
-		entry= entrypoint;
-	header [5]= entry & 0xFF;
-	header [6]= entry >> 8;	
+    // Header of an MSX BLOADable disk file.
+    byte header [7]= { 0xFE }; // Header identification byte.
+    // Start address.
+    header [1]= minused & 0xFF;
+    header [2]= minused >> 8;
+    // End address.
+    header [3]= maxused & 0xFF;
+    header [4]= maxused >> 8;
+    // Exec address.
+    address entry= 0;
+    if (hasentrypoint)
+        entry= entrypoint;
+    header [5]= entry & 0xFF;
+    header [6]= entry >> 8;	
 
-	// Write hader.
-	out.write (reinterpret_cast <char *> (header), sizeof (header) );
+    // Write hader.
+    out.write (reinterpret_cast <char *> (header), sizeof (header) );
 
-	// Write code.
-	writebincode (out);
+    // Write code.
+    writebincode (out);
 }
 
 void Asm::In::emitprl (std::ostream & out)
 {
-	message_emit ("PRL");
+    message_emit ("PRL");
 
-	// Assembly with 1 page offset to obtain the information needed
-	// to create the prl relocation table.
-	In asmoff (* this);
-	asmoff.setbase (0x100);
-	asmoff.processfile ();
+    // Assembly with 1 page offset to obtain the information needed
+    // to create the prl relocation table.
+    In asmoff (* this);
+    asmoff.setbase (0x100);
+    asmoff.processfile ();
 
-	if (minused - base != asmoff.minused - asmoff.base)
-		throw OutOfSyncPRL;
-	if (maxused - base != asmoff.maxused - asmoff.base)
-		throw OutOfSyncPRL;
-	address len= getcodesize ();
-	address off= asmoff.base - base;
+    if (minused - base != asmoff.minused - asmoff.base)
+        throw OutOfSyncPRL;
+    if (maxused - base != asmoff.maxused - asmoff.base)
+        throw OutOfSyncPRL;
+    address len= getcodesize ();
+    address off= asmoff.base - base;
 
-	// PRL header.
+    // PRL header.
 
-	byte prlhead [256]= { 0 };
-	prlhead [1]= len & 0xFF;
-	prlhead [2]= len >> 8;
-	out.write (reinterpret_cast <char *> (prlhead), sizeof (prlhead) );
-	address reloclen= (len + 7) / 8;
-	byte * reloc= new byte [reloclen];
-	//memset (reloc, 0, reloclen);
-	fill (reloc, reloc + reloclen, byte (0) );
+    byte prlhead [256]= { 0 };
+    prlhead [1]= len & 0xFF;
+    prlhead [2]= len >> 8;
+    out.write (reinterpret_cast <char *> (prlhead), sizeof (prlhead) );
+    address reloclen= (len + 7) / 8;
+    byte * reloc= new byte [reloclen];
+    //memset (reloc, 0, reloclen);
+    fill (reloc, reloc + reloclen, byte (0) );
 
-	// Build relocation bitmap.
-	for (address i= minused; i <= maxused; ++i)
-	{
-		byte b= mem [i];
-		byte b2= asmoff.mem [i + off];
-		if (b != b2)
-		{
-			if (b2 - b != off / 256)
-			{
-				* perr << "off= " << hex4 (off) <<
-					", b= " << hex2 (b) <<
-					", b2= " << hex2 (b2) <<
-					endl;
-				throw OutOfSyncPRL;
-			}
-			address pos= i - minused;
-			static const byte mask [8]= {
-				0x80, 0x40, 0x20, 0x10,
-				0x08, 0x04, 0x02, 0x01
-			};
-			reloc [pos / 8]|= mask [pos % 8];
-		}
-	}
+    // Build relocation bitmap.
+    for (address i= minused; i <= maxused; ++i)
+    {
+        byte b= mem [i];
+        byte b2= asmoff.mem [i + off];
+        if (b != b2)
+        {
+            if (b2 - b != off / 256)
+            {
+                * perr << "off= " << hex4 (off) <<
+                    ", b= " << hex2 (b) <<
+                    ", b2= " << hex2 (b2) <<
+                    endl;
+                throw OutOfSyncPRL;
+            }
+            address pos= i - minused;
+            static const byte mask [8]= {
+                0x80, 0x40, 0x20, 0x10,
+                0x08, 0x04, 0x02, 0x01
+            };
+            reloc [pos / 8]|= mask [pos % 8];
+        }
+    }
 
-	// Write code in position 0x0100
-	asmoff.writebincode (out);
+    // Write code in position 0x0100
+    asmoff.writebincode (out);
 
-	// Write relocation bitmap.
-	out.write (reinterpret_cast <char *> (reloc), reloclen);
+    // Write relocation bitmap.
+    out.write (reinterpret_cast <char *> (reloc), reloclen);
 
-	if (! out)
-		throw ErrorOutput;
+    if (! out)
+        throw ErrorOutput;
 }
 
 
 namespace {
 
 
-class CmdGroup {
-public:
-	CmdGroup ();			// Create empty group
-	CmdGroup (address lengthn);	// Create Code group
-	void put (std::ostream & out) const;
-private:
-	byte type;
-	address length;
-	address base;
-	address minimum;
-	address maximum;
+    class CmdGroup {
+        public:
+            CmdGroup ();			// Create empty group
+            CmdGroup (address lengthn);	// Create Code group
+            void put (std::ostream & out) const;
+        private:
+            byte type;
+            address length;
+            address base;
+            address minimum;
+            address maximum;
 
-	static address para (address n);
-};
+            static address para (address n);
+    };
 
-address CmdGroup::para (address n)
-{
-	return (n + 15) / 16;
-}
+    address CmdGroup::para (address n)
+    {
+        return (n + 15) / 16;
+    }
 
-CmdGroup::CmdGroup () :
-	type (0),
-	length (0),
-	base (0),
-	minimum (0),
-	maximum (0)
-{
-}
+    CmdGroup::CmdGroup () :
+        type (0),
+        length (0),
+        base (0),
+        minimum (0),
+        maximum (0)
+    {
+    }
 
-CmdGroup::CmdGroup (address lengthn) :
-	type (1),
-	length (para (lengthn) + 0x0010),
-	base (0),
-	minimum (length),
-	maximum (0x0FFF)
-{
-}
+    CmdGroup::CmdGroup (address lengthn) :
+        type (1),
+        length (para (lengthn) + 0x0010),
+        base (0),
+        minimum (length),
+        maximum (0x0FFF)
+    {
+    }
 
-void CmdGroup::put (std::ostream & out) const
-{
-	out.put (type);
-	putword (out, length);
-	putword (out, base);
-	putword (out, minimum);
-	putword (out, maximum);
-}
+    void CmdGroup::put (std::ostream & out) const
+    {
+        out.put (type);
+        putword (out, length);
+        putword (out, base);
+        putword (out, minimum);
+        putword (out, maximum);
+    }
 
 
 } // namespace
@@ -7217,32 +7212,32 @@ void CmdGroup::put (std::ostream & out) const
 
 void Asm::In::emitcmd (std::ostream & out)
 {
-	message_emit ("CMD");
+    message_emit ("CMD");
 
-	address codesize= getcodesize ();
-	CmdGroup code (codesize);
-	CmdGroup empty;
+    address codesize= getcodesize ();
+    CmdGroup code (codesize);
+    CmdGroup empty;
 
-	// CMD header.
+    // CMD header.
 
-	// 8 group descriptors: 72 bytes in total.
-	code.put (out);
-	for (size_t i= 1; i < 8; ++i)
-		empty.put (out);
+    // 8 group descriptors: 72 bytes in total.
+    code.put (out);
+    for (size_t i= 1; i < 8; ++i)
+        empty.put (out);
 
-	// Until 128 bytes: filled with zeroes (in this case).
-	char fillhead [128 - 72]= { };
-	out.write (fillhead, sizeof (fillhead) );
+    // Until 128 bytes: filled with zeroes (in this case).
+    char fillhead [128 - 72]= { };
+    out.write (fillhead, sizeof (fillhead) );
 
-	// First 256 bytes of prefix in 8080 model.
-	char prefix [256]= { };
-	out.write (prefix, sizeof (prefix) );
+    // First 256 bytes of prefix in 8080 model.
+    char prefix [256]= { };
+    out.write (prefix, sizeof (prefix) );
 
-	// Binary image.
-	writebincode (out);
+    // Binary image.
+    writebincode (out);
 
-	if (! out)
-		throw ErrorOutput;
+    if (! out)
+        throw ErrorOutput;
 }
 
 
@@ -7253,34 +7248,34 @@ void Asm::In::emitcmd (std::ostream & out)
 
 void Asm::In::dumppublic (std::ostream & out)
 {
-	for (setpublic_t::iterator pit= setpublic.begin ();
-		pit != setpublic.end ();
-		++pit)
-	{
-		mapvar_t::iterator it= mapvar.find (* pit);
-		if (it != mapvar.end () )
-		{
-			out << tablabel (it->first) << "EQU 0" <<
-				hex4 (it->second.getvalue () ) << 'H' << endl;
-		}
-	}
+    for (setpublic_t::iterator pit= setpublic.begin ();
+            pit != setpublic.end ();
+            ++pit)
+    {
+        mapvar_t::iterator it= mapvar.find (* pit);
+        if (it != mapvar.end () )
+        {
+            out << tablabel (it->first) << "EQU 0" <<
+                hex4 (it->second.getvalue () ) << 'H' << endl;
+        }
+    }
 }
 
 void Asm::In::dumpsymbol (std::ostream & out)
 {
-	for (mapvar_t::iterator it= mapvar.begin ();
-		it != mapvar.end ();
-		++it)
-	{
-		const VarData & vd= it->second;
-		// Dump only EQU and label valid symbols.
-		if (vd.def () != DefinedPass2)
-			continue;
+    for (mapvar_t::iterator it= mapvar.begin ();
+            it != mapvar.end ();
+            ++it)
+    {
+        const VarData & vd= it->second;
+        // Dump only EQU and label valid symbols.
+        if (vd.def () != DefinedPass2)
+            continue;
 
-		out << tablabel (it->first) << "EQU 0" <<
-			hex4 (vd.getvalue () ) << 'H'
-			<< endl;
-	}
+        out << tablabel (it->first) << "EQU 0" <<
+            hex4 (vd.getvalue () ) << 'H'
+            << endl;
+    }
 }
 
 
@@ -7290,23 +7285,23 @@ void Asm::In::dumpsymbol (std::ostream & out)
 
 
 Asm::Asm (MemMap& map) :
-	pin (new In(map))
+    pin (new In(map))
 {
 }
 
 Asm::~Asm ()
 {
-	delete pin;
+    delete pin;
 }
 
 void Asm::setheadername (const std::string & headername_n)
 {
-	pin->setheadername (headername_n);
+    pin->setheadername (headername_n);
 }
 
 void Asm::verbose ()
 {
-	pin->verbose ();
+    pin->verbose ();
 }
 
 void Asm::setdebugtype (DebugType type)

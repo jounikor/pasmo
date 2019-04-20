@@ -21,7 +21,7 @@ using std::string;
 using std::vector;
 using std::runtime_error;
 
-const string pasmoversion ("0.5.4.beta3.paged");
+const string pasmoversion ("0.5.4.beta4.paged");
 
 
 class Usage { };
