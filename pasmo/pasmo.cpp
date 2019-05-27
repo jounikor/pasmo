@@ -75,6 +75,7 @@ const string optplus3dos  ("--plus3dos");
 const string optprl       ("--prl");
 const string optpublic    ("--public");
 const string opttap       ("--tap");
+const string opttap128    ("--tap128");
 const string opttapbas    ("--tapbas");
 const string opttapbas128 ("--tapbas128");
 const string optmemmap    ("--memmap");
@@ -82,6 +83,7 @@ const string opttzx       ("--tzx");
 const string opttzxbas    ("--tzxbas");
 const string optw8080     ("--w8080");
 const string optsna       ("--sna");
+const string opthelp      ("--help");       // JiK: to be completed.
 
 
 class Options {
@@ -195,6 +197,9 @@ Options::Options (int argc, char * * argv) :
         } else if (arg == opttapbas128) {
             memmap = new MapSpectrum128;
             emitfunc = &Asm::emittapbas128;
+        } else if (arg == opttap128) {
+            memmap = new MapSpectrum128;
+            emitfunc = &Asm::emittap128;
         } else if (arg == opttzxbas)
 			emitfunc= & Asm::emittzxbas;
 		else if (arg == optcdtbas)

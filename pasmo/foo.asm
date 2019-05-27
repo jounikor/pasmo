@@ -44,8 +44,9 @@ test.foo:
 bank3:
     ld  bc,bank3
     ret
-    
-    BANK    4
+   
+
+    BANK    4 
 bank4:
     ld  bc,bank4
     ret

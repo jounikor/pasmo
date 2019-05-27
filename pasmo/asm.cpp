@@ -936,6 +936,7 @@ public:
 
 	void emittapbas (std::ostream & out);
 	void emittapbas128 (std::ostream & out);
+	void emittap128 (std::ostream & out);
 	void emittzxbas (std::ostream & out);
 
 	void emitsna(std::ostream & out);
@@ -3379,7 +3380,7 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
 			address addr = parseexpr (false, tok, tz);
             desp = addr & 0xff;
             *pout << "TypePlus IX or IY index is " << addr << 
-                " ($" << hex2str(desp) << ")\n";
+                " ($" << hex2str(desp) << ") on line " << getline() << "\n";
 
             // Note.. this changes the index handling from the 0.5.4 PASMO in a way
             // that positive numbers greater than 127 will create an error..
@@ -3413,7 +3414,7 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
 			address addr= parseexpr (false, tok, tz);
             desp = -addr & 0xff;
             *pwarn << "Warning: TypeMinus IX or IY index " << addr << 
-                " ($" << hex2str(desp) << ") is potentially wrong at line "
+                " ($" << hex2str(desp) << ") is potentially wrong on line "
                 << getline() << "\n";
             
             if (addr >= 32768) {
@@ -6261,7 +6262,7 @@ void Asm::In::emitpagedtap (std::ostream & out)
     int bank;
     address minused, maxused;
     address codesize, pos;
-    byte bankmem[Bank::banksize];
+    byte bankmem[Bank::banksize];       // JiK: VS 2019 fails here
     std::string headername; 
 
     for (bank = 0; bank < mem.getnumbanks(); bank++) {
@@ -6631,7 +6632,7 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         std::string basic;
         int bank;
 
-        // 10 REM 012345678901234567890123456
+        // 1 REM 012345678901234567890123456
         //std::string line = tokREM + "012345678901234567890123456";
         std::string line = tokREM + char(243) + char(223) + char(231)  \
             + char(205) + char(251) + char(36) + char(205) + char(162) + char(45) + char(58) \
@@ -6639,12 +6640,12 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
             + char(91) + char(121) + char(1) + char(253) + char(127) + char(237) + char(121) \
             + char(175) + char(251) + char(201);
 
-            basic+= basicline (10, line);
+            basic+= basicline (1, line);
 
-        // 20 CLEAR VAL "00000": LET c=(PEEK VAL "23635"+VAL "256"*PEEK VAL "23636")+VAL "5"
+        // 10 CLEAR VAL "00000": LET c=(PEEK VAL "23635"+VAL "256"*PEEK VAL "23636")+VAL "5"
         line = tokCLEAR + VALnumber (minused-1) + ':' + tokLET + "c=(" + tokPEEK + VALnumber (23635) \
                + '+' + VALnumber(256) + '*' + tokPEEK + VALnumber(23636) + ")+" + VALnumber(5);
-        basic+= basicline (20, line);
+        basic+= basicline (10, line);
 
         // 40 READ b
         line = tokREAD + 'b';
@@ -6732,6 +6733,22 @@ void Asm::In::emittapbas128(std::ostream & out)
             * pout << "Switching to normal TAP basic loader" << endl;
 
         emittapbas(out);
+    }
+}
+
+void Asm::In::emittap128(std::ostream & out)
+{
+    if (mem.gotpaged()) {
+        if (debugtype != NoDebug)
+            * pout << "Emiting TAP 128K" << endl;
+
+        // Prepare datas for banked output..
+        emitpagedtap (out);
+    } else {
+        if (debugtype != NoDebug)
+            * pout << "Switching to normal TAP" << endl;
+
+        emittap(out);
     }
 }
 
@@ -7149,6 +7166,11 @@ void Asm::emittapbas (std::ostream & out)
 void Asm::emittapbas128 (std::ostream & out)
 {
 	pin->emittapbas128 (out);
+}
+
+void Asm::emittap128 (std::ostream & out)
+{
+	pin->emittap128 (out);
 }
 
 void Asm::emittzxbas (std::ostream & out)

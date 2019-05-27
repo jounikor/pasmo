@@ -50,6 +50,7 @@ public:
 
 	void emittapbas (std::ostream & out);
     void emittapbas128 (std::ostream & out);
+    void emittap128 (std::ostream & out);
 	void emittzxbas (std::ostream & out);
 	void emitcdtbas (std::ostream & out);
 
