@@ -6608,25 +6608,18 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         23388 -> last page address
         23635 -> address of basic program
 
-        DI                  243
-        RST $18	            223         ;GET CHAR
-        ;CP ','		    ;#2C
-        ;RET NZ
-        RST $20	            231         ;NEXT CHAR
-        CALL $24FB	        205,251,36  ;EXPRESSION -> CALC STACK
-        CALL $2DA2	        205,162,45  ;CALC STACK TOP -> BC
-        ; 
-        LD  A,(23388)       58,92,91
-        AND $F8             230,248
-        OR  C               177
-        LD  (23388), A      50,92,91
-        LD  A,C             121
-        LD  BC, $7FFD       1,253,127
-        OUT (C), A          237,121
-        ; 
-        XOR A		        175         ;SET Z
-        EI                  251
-        RET                 201 -> 27
+	DI                   243
+        LD  A,(23388)        58,92,91
+        AND $F8              230,248
+        LD  B,A              71
+        LD  A,(23608)        58,56,92
+        OR  B                176
+        LD  (23388), A       50,92,91
+        LD  BC, $7FFD        1,253,127
+        OUT (C), A           237,121
+        EI                   251
+        RET                  201  -> 21 kpl
+
 
 #endif
         std::string basic;
@@ -6634,11 +6627,10 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
 
         // 1 REM 012345678901234567890123456
         //std::string line = tokREM + "012345678901234567890123456";
-        std::string line = tokREM + char(243) + char(223) + char(231)  \
-            + char(205) + char(251) + char(36) + char(205) + char(162) + char(45) + char(58) \
-            + char(92) + char(91) + char(230) + char(248) + char(177) + char(50) + char(92) \
-            + char(91) + char(121) + char(1) + char(253) + char(127) + char(237) + char(121) \
-            + char(175) + char(251) + char(201);
+        std::string line = tokREM + char(243) + char(58) + char(92) + char(91) \
+		+ char(230) + char(248) +  char(71) +  char(58) +  char(56) +  char(92) \
+		+ char(176) +  char(50) +  char(92) +  char(91) +   char(1) + char(253) \
+		+ char(127) + char(237) + char(121) + char(251) + char(201); 
 
             basic+= basicline (1, line);
 
@@ -6647,24 +6639,29 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
                + '+' + VALnumber(256) + '*' + tokPEEK + VALnumber(23636) + ")+" + VALnumber(5);
         basic+= basicline (10, line);
 
+	// 20 LET a=PEEK VAL "23608"
+	line = tokLET + "a=" + tokPEEK + VALnumber(23608);
+	basic += basicline(20,line);
+
         // 40 READ b
         line = tokREAD + 'b';
         basic += basicline(40,line);
 
-        // 50 IF b < VAL"8" THEN PRINT USR c,b: LOAD "" CODE
-        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPRINT +  tokUSR + "c,b:" \
-               + tokLOAD + "\"\"" + tokCODE;
+        // 50 IF b < VAL"8" THEN POKE VAL "23608",b: RANDOMIZE USR c: LOAD "" CODE
+        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPOKE +  VALnumber(23608) + ",b:" \
+		+ tokRANDOMIZE + tokUSR + "c:" \
+		+ tokLOAD + "\"\"" + tokCODE;
         basic += basicline(50,line);
 
-        // 60 IF b = VAL"8" THEN READ a: PRINT USR VAL "00000",a: STOP
-        line = tokIF + "b=" + VALnumber(8) + tokTHEN;
+        // 60 IF b = VAL"8" THEN RANDOMIZE USR VAL "00000",a: STOP
+        line = tokIF + "b=" + VALnumber(8) + tokTHEN + tokPOKE + VALnumber(23608) + ",a:";
 
         if (hasentrypoint) {
             // Line: 40 RANDOMIZE USR entry_point
             line = line + tokRANDOMIZE + tokUSR + VALnumber(entrypoint) + ':';
         }
 
-        line += tokSTOP;
+	line += tokSTOP; 
         basic += basicline(60,line);
 
         // 70 GO TO VAL "40"

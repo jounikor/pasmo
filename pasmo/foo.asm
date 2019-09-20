@@ -22,6 +22,7 @@ zzz     ds foof
     ORG $8000       ; -> fixed at BANK2
 
 main:
+    ld  ix,main
     ld  a,(ix-2)
     ld  a,(ix+2)
     ld  a,(iy-2)
