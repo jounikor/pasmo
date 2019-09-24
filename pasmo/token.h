@@ -259,6 +259,9 @@ public:
 	Token gettoken ();
 	void ungettoken ();
 	std::string getincludefile ();
+    void inserttoken ( const Token & tok ); // JiK
+    void dumptokenizer();                   // JiK
+
 
 	friend std::ostream & operator << (std::ostream & oss,
 		const Tokenizer & tz);

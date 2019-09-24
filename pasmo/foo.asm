@@ -23,13 +23,14 @@ zzz     ds foof
 
 main:
     ld  ix,main
-    ld  a,(ix-2)
+    ld  a,(ix+0-2)
     ld  a,(ix+2)
     ld  a,(iy-2)
     ld  a,(ix+2-1-3-2-4-3)
     ld  a,(ix-10)
     ld  a,(ix+10-5-10+foo.bar)
     ld  a,(iy-10-5-10)
+    ld  a,(iy-10+5-10)
 
     ld  hl,main
     ld  a,(test.foo)
@@ -51,7 +52,8 @@ bank3:
 bank4:
     ld  bc,bank4
     ret
-    
+   
+    if 0 
     BANK    2
     ORG     $c008
 bank5:
@@ -61,7 +63,7 @@ bank5:
     
     
     ret
-
+    endif
 
 
 dataa:

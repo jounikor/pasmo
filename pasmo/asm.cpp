@@ -1859,14 +1859,15 @@ void Asm::In::parsemuldiv (Tokenizer & tz, address & result,
 void Asm::In::parseplusmin (Tokenizer & tz, address & result,
 	bool required, bool ignored)
 {
-	parsemuldiv (tz, result, required, ignored);
+    parsemuldiv (tz, result, required, ignored);
 	Token tok= tz.gettoken ();
 	TypeToken tt= tok.type ();
 	while (tt == TypePlus || tt == TypeMinus)
 	{
 		address guard;
 		parsemuldiv (tz, guard, required, ignored);
-		switch (tt)
+        
+        switch (tt)
 		{
 		case TypePlus:
 			result+= guard;
@@ -1888,7 +1889,7 @@ void Asm::In::parserelops (Tokenizer & tz, address & result,
 	bool required, bool ignored)
 {
 	parseplusmin (tz, result, required, ignored);
-	Token tok= tz.gettoken ();
+    Token tok= tz.gettoken ();
 	TypeToken tt= tok.type ();
 	while (
 		tt == TypeEQ || tt == TypeEqOp ||
@@ -1962,7 +1963,7 @@ void Asm::In::parsenot (Tokenizer & tz, address & result,
 		case TypePlus:
 			break;
 		case TypeMinus:
-			result= - result;
+            result= - result;
 			break;
 		default:
 			ASSERT (false);
@@ -1972,7 +1973,7 @@ void Asm::In::parsenot (Tokenizer & tz, address & result,
 	else
 	{
 		tz.ungettoken ();
-		parserelops (tz, result, required, ignored);
+        parserelops (tz, result, required, ignored);
 	}
 }
 
@@ -2125,7 +2126,7 @@ address Asm::In::parseexpr (bool required, const Token & /* tok */,
 	TRF;
 
 	tz.ungettoken ();
-	address result;
+	address result = 0;
 	parsebase (tz, result, required, false);
 	return result;
 }
@@ -3374,13 +3375,21 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
 		if (! bracket)
 			throw BracketInsteadOfParen;
 		break;
+    case TypeMinus:
+        // This is a very ugly hack to IX-something tokenizer.. We just patch runtime
+        // any IX-nn to IX+0-nn (and similar for IY) so that the displacement index
+        // calculation would produce correct answer..
+        tz.ungettoken();
+        tz.inserttoken( Token( address(0) ));
+        tz.inserttoken( Token(TypePlus) );
+        tok = tz.gettoken();
 	case TypePlus:
-		tok= tz.gettoken ();
+		//tok= tz.gettoken ();
 		{
 			address addr = parseexpr (false, tok, tz);
             desp = addr & 0xff;
             *pout << "TypePlus IX or IY index is " << addr << 
-                " ($" << hex2str(desp) << ") on line " << getline() << "\n";
+                " ($" << hex2str(desp) << ") on " << getfile() << ":" << getline() << "\n";
 
             // Note.. this changes the index handling from the 0.5.4 PASMO in a way
             // that positive numbers greater than 127 will create an error..
@@ -3394,39 +3403,7 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
             if (addr > 127) {
                 throw OffsetOutOfRange;
             }
-
-			// We allow positive greater than 127 just in
-			// case someone uses hexadecimals such as 0FFh
-			// as offsets.
-			//if (addr > 255)
-			//	throw OffsetOutOfRange;
-			//desp= static_cast <byte> (addr);
-			expectcloseindir (tz, bracket);
-		}
-		break;
-    case TypeMinus:
-        // TODO: The (IX-something) has an tokenizer + parseexpr issue
-        // for example the followin (IX-12+13) produces address of 25
-        // although it should be 1.. to be fixed some day.
-
-		tok= tz.gettoken ();
-		{
-			address addr= parseexpr (false, tok, tz);
-            desp = -addr & 0xff;
-            *pwarn << "Warning: TypeMinus IX or IY index " << addr << 
-                " ($" << hex2str(desp) << ") is potentially wrong on line "
-                << getline() << "\n";
-            
-            if (addr >= 32768) {
-                addr = -addr + 1;
-            }
-            if (addr > 128) {
-                throw OffsetOutOfRange;
-            }
 			
-            //if (addr > 128)
-			//	throw OffsetOutOfRange;
-			//desp= static_cast <byte> (256 - addr);
 			expectcloseindir (tz, bracket);
 		}
 		break;

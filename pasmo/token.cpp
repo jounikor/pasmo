@@ -1165,6 +1165,28 @@ Token Tokenizer::gettoken ()
 	}
 }
 
+
+void Tokenizer::inserttoken( const Token& tok )
+{
+    current = tokenlist.insert(current, tok);
+}
+
+void Tokenizer::dumptokenizer()
+{
+    tokenlist_t::iterator i;
+
+    for (i = tokenlist.begin(); i != tokenlist.end(); i++) {
+        std::cout << "Token type = " << i->type() << ", str = " << i->str();
+
+        if (current == i) {
+            std::cout << " <===";
+        }
+
+        std::cout << "\n";
+    }
+}
+
+
 void Tokenizer::ungettoken ()
 {
 	if (endpassed > 0)
