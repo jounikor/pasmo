@@ -57,6 +57,7 @@ Current Pasmo version: 0.5.2
 	<li><a href="#codegentzx">--tzx mode.</a></li>
 	<li><a href="#codegencdt">--cdt mode.</a></li>
 	<li><a href="#codegentapbas">--tapbas mode.</a></li>
+	<li><a href="#codegentap128">--tap128 mode.</a></li>
 	<li><a href="#codegentapbas128">--tapbas128 mode.</a></li>
 	<li><a href="#codegentzxbas">--tzxbas mode.</a></li>
 	<li><a href="#codegencdtbas">--cdtbas mode.</a></li>
@@ -319,6 +320,11 @@ Generate the object file in .cdt format.
 Same as --tap but adding a Basic loader before the code.
 </dd>
 
+<dt>--tap128</dt>
+<dd>
+Same as --tapbas128 but enables banked code generation and loader without generating the BASIC loader. Instead, only the code files are saved.
+</dd>
+
 <dt>--tapbas128</dt>
 <dd>
 Same as --tapbas but enables banked code generation and loader.
@@ -505,6 +511,12 @@ the code, and executes it if a entry point is defined (see the
 directive). That way you can directly launch the code in a emulator,
 or transfer it to a tape for use in a real Spectrum.
 </p>
+
+<h3><a name="codegentap128">--tapbas128 mode</a></h3>
+<p>
+With the --tap128 option one or more code blocks with the object code are saved. Essentially this is the same option as <a href="#codegentapbas128">--tapbas128</a> but without the Basic loader.
+</p>
+
 
 <h3><a name="codegentapbas128">--tapbas128 mode</a></h3>
 
