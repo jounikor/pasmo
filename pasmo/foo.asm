@@ -22,13 +22,15 @@ zzz     ds foof
     ORG $8000       ; -> fixed at BANK2
 
 main:
-    ld  a,(ix-2)
+    ld  ix,main
+    ld  a,(ix+0-2)
     ld  a,(ix+2)
     ld  a,(iy-2)
     ld  a,(ix+2-1-3-2-4-3)
     ld  a,(ix-10)
     ld  a,(ix+10-5-10+foo.bar)
     ld  a,(iy-10-5-10)
+    ld  a,(iy-10+5-10)
 
     ld  hl,main
     ld  a,(test.foo)
@@ -44,14 +46,16 @@ test.foo:
 bank3:
     ld  bc,bank3
     ret
-    
-    BANK    4
+   
+
+    BANK    4 
 bank4:
     ld  bc,bank4
     ret
-    
+   
+    if 1 
     BANK    2
-    ORG     $c008
+    ORG     $c028
 bank5:
     ld  bc,bank5
     ld  ix,dataa
@@ -59,7 +63,7 @@ bank5:
     
     
     ret
-
+    endif
 
 
 dataa:

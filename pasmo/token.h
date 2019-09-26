@@ -91,7 +91,6 @@ enum TypeToken {
 	TypeEI,
 	TypeEX,
 	TypeEXX,
-    TypeFILLDE,
 	TypeHALT,
 	TypeIM,
 	TypeIN,
@@ -107,16 +106,7 @@ enum TypeToken {
 	TypeLDDR,
 	TypeLDI,
 	TypeLDIR,
-    TypeLDIX,
-    TypeLDIRX,
-    TypeLDDX,
-    TypeLDDRX,
-    TypeLDIRSCALE,
-    TypeLDPIRX,
-    TypeMIRROR,
-    TypeMUL,
 	TypeNEG,
-    TypeNEXTREG,
 	TypeNOP,
 	TypeOR,
 	TypeOTDR,
@@ -124,11 +114,7 @@ enum TypeToken {
 	TypeOUT,
 	TypeOUTD,
 	TypeOUTI,
-    TypeOUTINB,
-    TypePIXELDN,
-    TypePIXELAD,
 	TypePOP,
-    TypePOPX,
 	TypePUSH,
 	TypeRES,
 	TypeRET,
@@ -148,13 +134,13 @@ enum TypeToken {
 	TypeSBC,
 	TypeSCF,
 	TypeSET,
-    TypeSETAE,
+    //TypeSETAE,
 	TypeSLA,
 	TypeSLL,
 	TypeSRA,
 	TypeSRL,
 	TypeSUB,
-    TypeSWAPNIB,
+    //TypeSWAPNIB,
     TypeTEST,
 	TypeXOR,
 
@@ -169,7 +155,6 @@ enum TypeToken {
 	TypeD,
 	TypeE,
 	TypeDE,
-	TypeDEHL,
 	TypeH,
 	TypeL,
 	TypeHL,
@@ -242,9 +227,11 @@ public:
 	Token (TypeToken ttn);
 	Token (address n);
 	Token (TypeToken ttn, const std::string & sn);
-	TypeToken type () const;
+	~Token ();
+    TypeToken type () const;
 	std::string str () const;
 	address num () const;
+    bool operator==(const Token & );
 private:
 	TypeToken tt;
 	std::string s;
@@ -274,6 +261,9 @@ public:
 	Token gettoken ();
 	void ungettoken ();
 	std::string getincludefile ();
+    void inserttoken ( const Token & tok ); // JiK
+    void dumptokenizer();                   // JiK
+
 
 	friend std::ostream & operator << (std::ostream & oss,
 		const Tokenizer & tz);

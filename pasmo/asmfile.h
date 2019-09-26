@@ -19,6 +19,7 @@ public:
 	void loadfile (const std::string & filename, bool nocase,
 		std::ostream & outverb, std::ostream& outerr);
 	size_t getline () const;
+    std::string getfile () const;
 protected:
 	void openis (std::ifstream & is, const std::string & filename,
 		std::ios::openmode mode) const;
@@ -42,6 +43,7 @@ private:
 
 	static const size_t LINE_BEGIN= static_cast <size_t> (-1);
 	size_t currentline;
+    std::string currentfile;
 };
 
 

@@ -669,21 +669,6 @@ InitSimple::InitSimple ()
 	simpleinst [TypeRRA]=  SimpleInst (0x1F, false, true, 0xD0D8);
 	simpleinst [TypeRRCA]= SimpleInst (0x0F, false, true, 0xD0C8);
 	simpleinst [TypeRRD]=  SimpleInst (0x67, true);
-    // Simple - Spectrum Next OpCodes
-	simpleinst [TypeFILLDE]=    SimpleInst (0xB5, true);
-	simpleinst [TypeLDIX]=      SimpleInst (0xA5, true);
-    simpleinst [TypeLDIRX]=     SimpleInst (0xB4, true);
-    simpleinst [TypeLDDX]=      SimpleInst (0xAC, true);
-    simpleinst [TypeLDDRX]=     SimpleInst (0xBC, true);
-    simpleinst [TypeLDIRSCALE]= SimpleInst (0xB6, true);
-    simpleinst [TypeLDPIRX]=    SimpleInst (0xB7, true);
-    simpleinst [TypeMUL]=       SimpleInst (0x30, true);
-    simpleinst [TypeOUTINB]=    SimpleInst (0x90, true);
-    simpleinst [TypePIXELDN]=   SimpleInst (0x93, true);
-    simpleinst [TypePIXELAD]=   SimpleInst (0x94, true);
-    simpleinst [TypePOPX]=      SimpleInst (0x8B, true);
-    simpleinst [TypeSETAE]=     SimpleInst (0x95, true);
-    simpleinst [TypeSWAPNIB]=   SimpleInst (0x23, true);
 }
 
 
@@ -951,6 +936,7 @@ public:
 
 	void emittapbas (std::ostream & out);
 	void emittapbas128 (std::ostream & out);
+	void emittap128 (std::ostream & out);
 	void emittzxbas (std::ostream & out);
 
 	void emitsna(std::ostream & out);
@@ -1099,8 +1085,6 @@ private:
 		regwCode regcode, byte prefix= NoPrefix);
 	void parseLDdouble (Tokenizer & tz, regwCode regcode,
 		byte prefix= NoPrefix);
-	void parseLDquad (Tokenizer & tz, regdwCode regcode,
-		byte prefix= prefixED);
 	void parseLDSP (Tokenizer & tz);
 
 	void parseLD_IrPlus (Tokenizer & tz, bool bracket, byte prefix);
@@ -1158,11 +1142,6 @@ private:
 	void parseBIT (Tokenizer & tz);
 	void parseRES (Tokenizer & tz);
 	void parseSET (Tokenizer & tz);
-
-    // Spectrum Next OpCodes
-    void parseMirror (Tokenizer & tz);
-    void parseNextReg (Tokenizer & tz);
-    void parseTest (Tokenizer & tz);
 
 	void parseDEFB (Tokenizer & tz);
 	void parseDEFW (Tokenizer & tz);
@@ -1880,14 +1859,15 @@ void Asm::In::parsemuldiv (Tokenizer & tz, address & result,
 void Asm::In::parseplusmin (Tokenizer & tz, address & result,
 	bool required, bool ignored)
 {
-	parsemuldiv (tz, result, required, ignored);
+    parsemuldiv (tz, result, required, ignored);
 	Token tok= tz.gettoken ();
 	TypeToken tt= tok.type ();
 	while (tt == TypePlus || tt == TypeMinus)
 	{
 		address guard;
 		parsemuldiv (tz, guard, required, ignored);
-		switch (tt)
+        
+        switch (tt)
 		{
 		case TypePlus:
 			result+= guard;
@@ -1909,7 +1889,7 @@ void Asm::In::parserelops (Tokenizer & tz, address & result,
 	bool required, bool ignored)
 {
 	parseplusmin (tz, result, required, ignored);
-	Token tok= tz.gettoken ();
+    Token tok= tz.gettoken ();
 	TypeToken tt= tok.type ();
 	while (
 		tt == TypeEQ || tt == TypeEqOp ||
@@ -1983,7 +1963,7 @@ void Asm::In::parsenot (Tokenizer & tz, address & result,
 		case TypePlus:
 			break;
 		case TypeMinus:
-			result= - result;
+            result= - result;
 			break;
 		default:
 			ASSERT (false);
@@ -1993,7 +1973,7 @@ void Asm::In::parsenot (Tokenizer & tz, address & result,
 	else
 	{
 		tz.ungettoken ();
-		parserelops (tz, result, required, ignored);
+        parserelops (tz, result, required, ignored);
 	}
 }
 
@@ -2146,7 +2126,7 @@ address Asm::In::parseexpr (bool required, const Token & /* tok */,
 	TRF;
 
 	tz.ungettoken ();
-	address result;
+	address result = 0;
 	parsebase (tz, result, required, false);
 	return result;
 }
@@ -2812,16 +2792,6 @@ void Asm::In::parsegeneric (Tokenizer & tz, Token tok)
 		throw DEFLwithoutlabel;
 	case Type_SHIFT:
 		throw ShiftOutsideMacro;
-    // Spectrum Next OpCodes
-    case TypeMIRROR:
-        parseMirror (tz);
-        break;
-    case TypeNEXTREG:
-        parseNextReg (tz);
-        break;
-    case TypeTEST:
-        parseTest (tz);
-        break;
 	default:
 		throw NoInstruction (tok);
 	}
@@ -3405,13 +3375,22 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
 		if (! bracket)
 			throw BracketInsteadOfParen;
 		break;
+    case TypeMinus:
+        // This is a very ugly hack to IX-something tokenizer.. We just patch runtime
+        // any IX-nn to IX+0-nn (and similar for IY) so that the displacement index
+        // calculation would produce correct answer..
+        tz.ungettoken();
+        tz.inserttoken( Token( address(0) ));
+        tz.inserttoken( Token(TypePlus) );
+        //tz.dumptokenizer();
+        tok = tz.gettoken();
 	case TypePlus:
-		tok= tz.gettoken ();
+		//tok= tz.gettoken ();
 		{
 			address addr = parseexpr (false, tok, tz);
             desp = addr & 0xff;
             *pout << "TypePlus IX or IY index is " << addr << 
-                " ($" << hex2str(desp) << ")\n";
+                " ($" << hex2str(desp) << ") on " << getfile() << ":" << getline() << "\n";
 
             // Note.. this changes the index handling from the 0.5.4 PASMO in a way
             // that positive numbers greater than 127 will create an error..
@@ -3425,39 +3404,7 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
             if (addr > 127) {
                 throw OffsetOutOfRange;
             }
-
-			// We allow positive greater than 127 just in
-			// case someone uses hexadecimals such as 0FFh
-			// as offsets.
-			//if (addr > 255)
-			//	throw OffsetOutOfRange;
-			//desp= static_cast <byte> (addr);
-			expectcloseindir (tz, bracket);
-		}
-		break;
-    case TypeMinus:
-        // TODO: The (IX-something) has an tokenizer + parseexpr issue
-        // for example the followin (IX-12+13) produces address of 25
-        // although it should be 1.. to be fixed some day.
-
-		tok= tz.gettoken ();
-		{
-			address addr= parseexpr (false, tok, tz);
-            desp = -addr & 0xff;
-            *pwarn << "Warning: TypeMinus IX or IY index " << addr << 
-                " ($" << hex2str(desp) << ") is potentially wrong at line "
-                << getline() << "\n";
-            
-            if (addr >= 32768) {
-                addr = -addr + 1;
-            }
-            if (addr > 128) {
-                throw OffsetOutOfRange;
-            }
 			
-            //if (addr > 128)
-			//	throw OffsetOutOfRange;
-			//desp= static_cast <byte> (256 - addr);
 			expectcloseindir (tz, bracket);
 		}
 		break;
@@ -3919,21 +3866,6 @@ void Asm::In::parseLDA (Tokenizer & tz)
 		no8080 ();
 }
 
-void Asm::In::parseLDA32 (Tokenizer & tz)
-{
-	expectcomma (tz);
-	Token tok= tz.gettoken ();
-	TypeToken tt= tok.type ();
-    ASSERT (tt == TypeA32);
-
-    no86 ();
-    gencodeED (0x20);
-    showcode ("LD A32, DEHL");
-	checkendline (tz);
-    no8080 ();
-}
-
-
 void Asm::In::parseLDsimplen (Tokenizer & tz, regbCode regcode,
 	byte prevprefix)
 {
@@ -4168,31 +4100,6 @@ void Asm::In::parseLDdouble (Tokenizer & tz,
     		parseLDdoublenn (tz, regcode, prefix);
         }
 	}
-}
-
-void Asm::In::parseLDquad (Tokenizer & tz,
-    regdwCode regcode, byte prefix)
-{
-	TRF;
-
-	ASSERT (regcode == regDEHL && prefix == prefixED);
-
-	expectcomma (tz);
-	Token tok= tz.gettoken ();
-	TypeToken tt= tok.type ();
-
-    if (tt == TypeA32)
-    {
-		no86 ();
-		gencodeED (0x21);
-		showcode ("LD DEHL, A32");
-		no8080 ();
-    }
-    else
-    {
-        throw InvalidOperand;
-    }
-	checkendline (tz);
 }
 
 void Asm::In::parseLDSP (Tokenizer & tz)
@@ -4447,9 +4354,6 @@ void Asm::In::parseLD (Tokenizer & tz)
 	case TypeA:
 		parseLDA (tz);
 		break;
-	case TypeA32:
-		parseLDA32 (tz);
-		break;
 	case TypeB:
 		parseLDsimple (tz, regB);
 		break;
@@ -4491,9 +4395,6 @@ void Asm::In::parseLD (Tokenizer & tz)
 		break;
 	case TypeDE:
 		parseLDdouble (tz, regDE);
-		break;
-	case TypeDEHL:
-        parseLDquad (tz, regDEHL);
 		break;
 	case TypeHL:
 		parseLDdouble (tz, regHL);
@@ -4584,36 +4485,10 @@ void Asm::In::parseSUB (Tokenizer & tz)
 
 	switch (tok.type () )
 	{
-	case TypeDEHL:
-        parseSUBDEHL(tz);
-        break;
     default:
         tz.ungettoken();
     	dobyteparam (tz, tiSUB);
     }
-}
-
-void Asm::In::parseSUBDEHL (Tokenizer & tz)
-{
-    expectcomma (tz);
-    no86 ();
-	Token tok= tz.gettoken ();
-
-	switch (tok.type () )
-	{
-    case TypeA:
-        gencodeED (0x3C);
-        showcode ("SUB DEHL, A");
-        break;
-    case TypeBC:
-        gencodeED (0x3D);
-        showcode ("SUB DEHL, BC");
-        break;
-    default:
-        throw InvalidOperand;
-    }
-    no8080 ();
-	checkendline (tz);
 }
 
 void Asm::In::parseADDBCDE (Tokenizer & tz, byte prefix, byte basecode)
@@ -4646,38 +4521,6 @@ void Asm::In::parseADDBCDE (Tokenizer & tz, byte prefix, byte basecode)
 	}
 	checkendline (tz);
 }
-
-void Asm::In::parseADDDEHL (Tokenizer & tz)
-{
-	expectcomma (tz);
-	Token tok= tz.gettoken ();
-	regwCode reg;
-    no86 ();
-	switch (tok.type () )
-	{
-    case TypeA:
-        gencodeED (0x39);
-        showcode ("ADD DEHL, A" );
-        break;
-    case TypeBC:
-        gencodeED (0x3A);
-        showcode ("ADD DEHL, BC" );
-        break;
-    case TypeNumber:
-        {
-            gencodeED (0x3B);
-            address value= parseexpr (true, tok, tz);
-            gendataword (value);
-            showcode ("ADD DEHL, " +  hex4str(value));
-        }
-        break;
-    default:
-        throw InvalidOperand;
-    }
-    no8080 ();
-    checkendline (tz);
-}
-
 
 void Asm::In::parseADDADCSBCHL (Tokenizer & tz, byte prefix, byte basecode)
 {
@@ -4805,9 +4648,6 @@ void Asm::In::parseADD (Tokenizer & tz)
 	case TypeHL:
 		parseADDADCSBCHL (tz, NoPrefix, codeADDHL);
 		return;
-    case TypeDEHL:
-        parseADDDEHL (tz);
-        return;
 	case TypeIX:
 		parseADDADCSBCHL (tz, prefixIX, codeADDHL);
 		return;
@@ -4895,17 +4735,6 @@ void Asm::In::parsePUSHPOP (Tokenizer & tz, bool isPUSH)
 		code= regHL;
 		prefix= prefixIY;
 		break;
-    case TypeNumber:
-        {
-    		ASSERT (isPUSH);
-    		no86 ();
-            gencodeED (0x8A);
-            address value = parseexpr (true, tok, tz);
-    		gendataword (value);
-        	showcode (std::string ("PUSH") + ' ' + hex4str (value) );
-            no8080 ();
-        }
-        return;
 	default:
 		throw InvalidOperand;
 	}
@@ -5401,12 +5230,6 @@ void Asm::In::parseINCDEC (Tokenizer & tz, bool isINC)
 	case TypeHL:
 		parseINCDECdouble (tz, isINC, regHL);
 		break;
-	case TypeDEHL:
-        no86 ();
-		isINC ? gencodeED (0x37) : gencodeED (0x38);
-    	showcode (std::string (isINC ? "INC" : "DEC") + ' ' + regdwName (regDEHL, 0xED) );
-		no8080 ();
-		break;
 	case TypeIX:
 		parseINCDECdouble (tz, isINC, regHL, prefixIX);
 		break;
@@ -5474,16 +5297,6 @@ void Asm::In::parseEX (Tokenizer & tz)
 		no86 ();
 		gencode (0x08);
 		showcode ("EX AF, AF'");
-		no8080 ();
-		break;
-	case TypeA32:
-		expectcomma (tz);
-		tok= tz.gettoken ();
-		if (tok.type () != TypeDEHL)
-			throw InvalidOperand;
-		no86 ();
-		gencodeED (0x22);
-		showcode ("EX A32, DEHL");
 		no8080 ();
 		break;
 	case TypeDE:
@@ -5685,100 +5498,6 @@ void Asm::In::parseSET (Tokenizer & tz)
 {
 	dobit (tz, 0xC0, "SET");
 }
-
-void Asm::In::parseMirror (Tokenizer & tz)
-{
-	Token tok= tz.gettoken ();
-	byte code;
-	switch (tok.type () )
-	{
-	case TypeA:
-		{
-            no86 ();
-            gencodeED (0x24);
-            showcode ("MIRROR A");
-            no8080 ();
-        }
-		checkendline (tz);
-		return;
-	case TypeDE:
-		{
-            no86 ();
-            gencodeED (0x26);
-            showcode ("MIRROR DE");
-            no8080 ();
-        }
-		checkendline (tz);
-		return;
-	default:
-		throw InvalidOperand;
-	}
-}
-
-void Asm::In::parseNextReg (Tokenizer & tz)
-{
-	Token tok= tz.gettoken ();
-
-	if (tok.type () == TypeNumber)
-	{
-    	byte reg= parseexpr (true, tok, tz);
-    	expectcomma (tz);
-	    Token tok= tz.gettoken ();
-    	TypeToken tt= tok.type ();
-        if (tok.type () == TypeA)
-        {
-        	no86 ();
-
-        	gencodeED (0x92);
-            gendata (reg);
-        	showcode ("NEXTREG " + hex2str (reg) + ", A");
-
-	        no8080 ();
-
-    		checkendline (tz);
-            return;
-        }
-        else if (tok.type () == TypeNumber)
-        {
-        	no86 ();
-
-        	gencodeED (0x93);
-            gendata (reg);
-        	byte value= parseexpr (true, tok, tz);
-            gendata (value);
-        	showcode ("NEXTREG " + hex2str (reg) + ", " + hex2str (value));
-
-	        no8080 ();
-
-    		checkendline (tz);
-            return;
-        }
-        else
-        {
-            // invalid operation
-			throw InvalidInstruction;
-        }
-    }
-}
-
-void Asm::In::parseTest (Tokenizer & tz)
-{
-	Token tok= tz.gettoken ();
-
-	if (tok.type () != TypeNumber)
-	{
-        throw InvalidOperand;
-    }
-
-    no86 ();
-    gencodeED (0x27);
-    byte value= parseexpr (true, tok, tz);
-    gendata (value);
-    showcode ("TEST " + hex2str (value));
-    no8080 ();
-    checkendline (tz);
- }
-
 
 void Asm::In::parseDEFB (Tokenizer & tz)
 {
@@ -6521,7 +6240,7 @@ void Asm::In::emitpagedtap (std::ostream & out)
     int bank;
     address minused, maxused;
     address codesize, pos;
-    byte bankmem[Bank::banksize];
+    byte bankmem[Bank::banksize];       // JiK: VS 2019 fails here
     std::string headername; 
 
     for (bank = 0; bank < mem.getnumbanks(); bank++) {
@@ -6867,63 +6586,60 @@ std::string Asm::In::spectrumpagedbasicloader ()        // TODO
         23388 -> last page address
         23635 -> address of basic program
 
-        DI                  243
-        RST $18	            223         ;GET CHAR
-        ;CP ','		    ;#2C
-        ;RET NZ
-        RST $20	            231         ;NEXT CHAR
-        CALL $24FB	        205,251,36  ;EXPRESSION -> CALC STACK
-        CALL $2DA2	        205,162,45  ;CALC STACK TOP -> BC
-        ; 
-        LD  A,(23388)       58,92,91
-        AND $F8             230,248
-        OR  C               177
-        LD  (23388), A      50,92,91
-        LD  A,C             121
-        LD  BC, $7FFD       1,253,127
-        OUT (C), A          237,121
-        ; 
-        XOR A		        175         ;SET Z
-        EI                  251
-        RET                 201 -> 27
+	DI                   243
+        LD  A,(23388)        58,92,91
+        AND $F8              230,248
+        LD  B,A              71
+        LD  A,(23608)        58,56,92
+        OR  B                176
+        LD  (23388), A       50,92,91
+        LD  BC, $7FFD        1,253,127
+        OUT (C), A           237,121
+        EI                   251
+        RET                  201  -> 21 kpl
+
 
 #endif
         std::string basic;
         int bank;
 
-        // 10 REM 012345678901234567890123456
+        // 1 REM 012345678901234567890123456
         //std::string line = tokREM + "012345678901234567890123456";
-        std::string line = tokREM + char(243) + char(223) + char(231)  \
-            + char(205) + char(251) + char(36) + char(205) + char(162) + char(45) + char(58) \
-            + char(92) + char(91) + char(230) + char(248) + char(177) + char(50) + char(92) \
-            + char(91) + char(121) + char(1) + char(253) + char(127) + char(237) + char(121) \
-            + char(175) + char(251) + char(201);
+        std::string line = tokREM + char(243) + char(58) + char(92) + char(91) \
+		+ char(230) + char(248) +  char(71) +  char(58) +  char(56) +  char(92) \
+		+ char(176) +  char(50) +  char(92) +  char(91) +   char(1) + char(253) \
+		+ char(127) + char(237) + char(121) + char(251) + char(201); 
 
-            basic+= basicline (10, line);
+            basic+= basicline (1, line);
 
-        // 20 CLEAR VAL "00000": LET c=(PEEK VAL "23635"+VAL "256"*PEEK VAL "23636")+VAL "5"
+        // 10 CLEAR VAL "00000": LET c=(PEEK VAL "23635"+VAL "256"*PEEK VAL "23636")+VAL "5"
         line = tokCLEAR + VALnumber (minused-1) + ':' + tokLET + "c=(" + tokPEEK + VALnumber (23635) \
                + '+' + VALnumber(256) + '*' + tokPEEK + VALnumber(23636) + ")+" + VALnumber(5);
-        basic+= basicline (20, line);
+        basic+= basicline (10, line);
+
+	// 20 LET a=PEEK VAL "23608"
+	line = tokLET + "a=" + tokPEEK + VALnumber(23608);
+	basic += basicline(20,line);
 
         // 40 READ b
         line = tokREAD + 'b';
         basic += basicline(40,line);
 
-        // 50 IF b < VAL"8" THEN PRINT USR c,b: LOAD "" CODE
-        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPRINT +  tokUSR + "c,b:" \
-               + tokLOAD + "\"\"" + tokCODE;
+        // 50 IF b < VAL"8" THEN POKE VAL "23608",b: RANDOMIZE USR c: LOAD "" CODE
+        line = tokIF + "b<" + VALnumber(8) + tokTHEN + tokPOKE +  VALnumber(23608) + ",b:" \
+		+ tokRANDOMIZE + tokUSR + "c:" \
+		+ tokLOAD + "\"\"" + tokCODE;
         basic += basicline(50,line);
 
-        // 60 IF b = VAL"8" THEN READ a: PRINT USR VAL "00000",a: STOP
-        line = tokIF + "b=" + VALnumber(8) + tokTHEN;
+        // 60 IF b = VAL"8" THEN RANDOMIZE USR VAL "00000",a: STOP
+        line = tokIF + "b=" + VALnumber(8) + tokTHEN + tokPOKE + VALnumber(23608) + ",a:";
 
         if (hasentrypoint) {
             // Line: 40 RANDOMIZE USR entry_point
             line = line + tokRANDOMIZE + tokUSR + VALnumber(entrypoint) + ':';
         }
 
-        line += tokSTOP;
+	line += tokSTOP; 
         basic += basicline(60,line);
 
         // 70 GO TO VAL "40"
@@ -6992,6 +6708,22 @@ void Asm::In::emittapbas128(std::ostream & out)
             * pout << "Switching to normal TAP basic loader" << endl;
 
         emittapbas(out);
+    }
+}
+
+void Asm::In::emittap128(std::ostream & out)
+{
+    if (mem.gotpaged()) {
+        if (debugtype != NoDebug)
+            * pout << "Emiting TAP 128K" << endl;
+
+        // Prepare datas for banked output..
+        emitpagedtap (out);
+    } else {
+        if (debugtype != NoDebug)
+            * pout << "Switching to normal TAP" << endl;
+
+        emittap(out);
     }
 }
 
@@ -7409,6 +7141,11 @@ void Asm::emittapbas (std::ostream & out)
 void Asm::emittapbas128 (std::ostream & out)
 {
 	pin->emittapbas128 (out);
+}
+
+void Asm::emittap128 (std::ostream & out)
+{
+	pin->emittap128 (out);
 }
 
 void Asm::emittzxbas (std::ostream & out)

@@ -3,6 +3,7 @@
 
 #include "token.h"
 
+#include <ios>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -110,7 +111,6 @@ const NameType nt []= {
 	NT (EI),
 	NT (EX),
 	NT (EXX),
-    NT (FILLDE),    // *
 	NT (HALT),
 	NT (IM),
 	NT (IN),
@@ -126,16 +126,7 @@ const NameType nt []= {
 	NT (LDDR),
 	NT (LDI),
 	NT (LDIR),
-    NT (LDIX),      // *
-    NT (LDIRX),     // *
-    NT (LDDX),      // *
-    NT (LDDRX),     // *
-    NT (LDIRSCALE), // *
-    NT (LDPIRX),    // *
-    NT (MIRROR),    // *
-    NT (MUL),       // *
 	NT (NEG),
-    NT (NEXTREG),   // *
 	NT (NOP),
 	NT (OR),
 	NT (OTDR),
@@ -143,11 +134,7 @@ const NameType nt []= {
 	NT (OUT),
 	NT (OUTD),
 	NT (OUTI),
-    NT (OUTINB),    // *
-    NT (PIXELDN),   // *
-    NT (PIXELAD),   // *
 	NT (POP),
-    NT (POPX),      // *
 	NT (PUSH),
 	NT (RES),
 	NT (RET),
@@ -167,14 +154,11 @@ const NameType nt []= {
 	NT (SBC),
 	NT (SCF),
 	NT (SET),
-    NT (SETAE),     // *
 	NT (SLA),
 	NT (SLL),
 	NT (SRA),
 	NT (SRL),
 	NT (SUB),
-    NT (SWAPNIB),   // *
-    NT (TEST),      // *
 	NT (XOR),
 
 	// Registers.
@@ -188,7 +172,6 @@ const NameType nt []= {
 	NT (D),
 	NT (E),
 	NT (DE),
-	NT (DEHL),
 	NT (H),
 	NT (L),
 	NT (HL),
@@ -347,9 +330,26 @@ Token::Token (TypeToken ttn, const std::string & sn) :
 {
 }
 
+Token::~Token()
+{
+}
+
+
+
 TypeToken Token::type () const
 {
 	return tt;
+}
+
+bool Token::operator==(const Token & t)
+{
+    if (t.tt == tt &&
+        t.number == number &&
+        t.s == s) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 namespace {
@@ -1182,6 +1182,47 @@ Token Tokenizer::gettoken ()
 		return tok;
 	}
 }
+
+
+void Tokenizer::inserttoken( const Token& tok )
+{
+    current = tokenlist.insert(current, tok);
+}
+
+void Tokenizer::dumptokenizer()
+{
+    tokenlist_t::iterator i;
+
+
+#if 0
+    for (i = tokenlist.begin(); i != tokenlist.end(); i++) {
+        std::cout << "Token type = " << i->type() << ", str = " << i->str();
+
+        if (current == i) {
+            std::cout << " <=== current";
+        }
+
+        std::cout << "\n";
+    }
+#else
+    std::cout << "Tokelist dump for the current line:\n";
+    std::for_each(tokenlist.begin(), tokenlist.end(),
+            [&](Token & t) -> void {
+                std::cout << "\tToken type = " << t.type() << ", str = " << t.str();
+
+                if (*current == t) {
+                    std::cout << " <=== current";
+                }
+
+                std::cout << "\n";
+            });
+
+
+#endif
+
+
+}
+
 
 void Tokenizer::ungettoken ()
 {

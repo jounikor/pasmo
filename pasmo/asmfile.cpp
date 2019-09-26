@@ -497,6 +497,7 @@ void AsmFile::loadfile (const std::string & filename, bool nocase,
 	std::ostream & outverb, std::ostream& outerr)
 {
 	in ().loadfile (filename, nocase, outverb, outerr);
+    currentfile = filename;
 }
 
 bool AsmFile::getvalidline ()
@@ -520,6 +521,11 @@ bool AsmFile::passeof () const
 size_t AsmFile::getline () const
 {
 	return currentline;
+}
+
+std::string AsmFile::getfile () const
+{
+	return currentfile;
 }
 
 Tokenizer & AsmFile::getcurrentline ()
