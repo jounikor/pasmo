@@ -227,9 +227,11 @@ public:
 	Token (TypeToken ttn);
 	Token (address n);
 	Token (TypeToken ttn, const std::string & sn);
-	TypeToken type () const;
+	~Token ();
+    TypeToken type () const;
 	std::string str () const;
 	address num () const;
+    bool operator==(const Token & );
 private:
 	TypeToken tt;
 	std::string s;

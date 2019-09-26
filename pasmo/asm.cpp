@@ -3382,6 +3382,7 @@ byte Asm::In::parsedesp (Tokenizer & tz, bool bracket)
         tz.ungettoken();
         tz.inserttoken( Token( address(0) ));
         tz.inserttoken( Token(TypePlus) );
+        //tz.dumptokenizer();
         tok = tz.gettoken();
 	case TypePlus:
 		//tok= tz.gettoken ();

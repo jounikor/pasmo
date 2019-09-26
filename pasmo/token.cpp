@@ -3,6 +3,7 @@
 
 #include "token.h"
 
+#include <ios>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -329,9 +330,26 @@ Token::Token (TypeToken ttn, const std::string & sn) :
 {
 }
 
+Token::~Token()
+{
+}
+
+
+
 TypeToken Token::type () const
 {
 	return tt;
+}
+
+bool Token::operator==(const Token & t)
+{
+    if (t.tt == tt &&
+        t.number == number &&
+        t.s == s) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 namespace {
@@ -1175,15 +1193,34 @@ void Tokenizer::dumptokenizer()
 {
     tokenlist_t::iterator i;
 
+
+#if 0
     for (i = tokenlist.begin(); i != tokenlist.end(); i++) {
         std::cout << "Token type = " << i->type() << ", str = " << i->str();
 
         if (current == i) {
-            std::cout << " <===";
+            std::cout << " <=== current";
         }
 
         std::cout << "\n";
     }
+#else
+    std::cout << "Tokelist dump for the current line:\n";
+    std::for_each(tokenlist.begin(), tokenlist.end(),
+            [&](Token & t) -> void {
+                std::cout << "\tToken type = " << t.type() << ", str = " << t.str();
+
+                if (*current == t) {
+                    std::cout << " <=== current";
+                }
+
+                std::cout << "\n";
+            });
+
+
+#endif
+
+
 }
 
 

@@ -53,9 +53,9 @@ bank4:
     ld  bc,bank4
     ret
    
-    if 0 
+    if 1 
     BANK    2
-    ORG     $c008
+    ORG     $c028
 bank5:
     ld  bc,bank5
     ld  ix,dataa
