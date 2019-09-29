@@ -940,6 +940,7 @@ public:
 	void emittzxbas (std::ostream & out);
 
 	void emitsna(std::ostream & out);
+	void emitsna128(std::ostream & out);
 
 	void emithex (std::ostream & out);
 	void emitamsdos (std::ostream & out);
@@ -6404,6 +6405,13 @@ void Asm::In::writecdtcode (std::ostream & out)
 		throw ErrorOutput;
 }
 
+void Asm::In::emitsna128(std::ostream & out)
+{
+	message_emit("SNA128");
+	// TBD
+}	
+
+
 void Asm::In::emitsna(std::ostream & out)
 {
 	message_emit("SNA");
@@ -7176,6 +7184,11 @@ void Asm::emitcmd (std::ostream & out)
 void Asm::emitmsx (std::ostream & out)
 {
 	pin->emitmsx (out);
+}
+
+void Asm::emitsna128(std::ostream & out)
+{
+	pin->emitsna128(out);
 }
 
 void Asm::emitsna(std::ostream & out)

@@ -83,7 +83,8 @@ const string opttzx       ("--tzx");
 const string opttzxbas    ("--tzxbas");
 const string optw8080     ("--w8080");
 const string optsna       ("--sna");
-const string opthelp      ("--help");       // JiK: to be completed.
+const string optsna128    ("--sna128");
+const string opthelp      ("--help");
 
 
 class Options {
@@ -208,6 +209,8 @@ Options::Options (int argc, char * * argv) :
 			emitfunc= & Asm::emitamsdos;
 		else if (arg == optmsx)
 			emitfunc= & Asm::emitmsx;
+		else if (arg == optsna128)
+			emitfunc= & Asm::emitsna128;
 		else if (arg == optsna)
 			emitfunc= & Asm::emitsna;
 		else if (arg == optpublic)

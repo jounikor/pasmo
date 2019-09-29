@@ -64,6 +64,8 @@ Current Pasmo version: 0.5.2
 	<li><a href="#codegenplus3dos">--plus3dos mode.</a></li>
 	<li><a href="#codegenamsdos">--amsdos mode.</a></li>
 	<li><a href="#codegenmsx">--msx mode.</a></li>
+	<li><a href="#codegensna">--sna mode.</a></li>
+	<li><a href="#codegensna128">--sna128 mode.</a></li>
 	<li><a href="#codegensymbol">Symbol table.</a></li>
 	</ul>
 </li>
@@ -355,6 +357,16 @@ Generate the object file in Amsdos format.
 Generate the object file in MSX format.
 </dd>
 
+<dt>--sna</dt>
+<dd>
+Generate the object file in SNA format.
+</dd>
+
+<dt>--sna128</dt>
+<dd>
+Generate the object file in SNA 128K format. If not banking has been used the output revets back to SNA format.
+</dd>
+
 <dt>--public</dt>
 <dd>
 Only the public symbols table is generated, using the file.symbol name,
@@ -576,6 +588,18 @@ directive).
 
 <p>
 Generate the object file with header for use with BLOAD in MSX Basic.
+</p>
+
+<h3><a name="codegensna">--sna mode</a></h3>
+
+<p>
+With the --sna option a .TBD
+</p>
+
+<h3><a name="codegensna128">--sna128 mode</a></h3>
+
+<p>
+With the --sna128 option a .TBD
 </p>
 
 <h3><a name="codegensymbol">Symbol table</a></h3>
@@ -1477,9 +1501,8 @@ The same may be done for the other formats supported.
 
 <h2><a name="bugs">Bugs</a>.</h2>
 <p>
-Pasmo has issues with IX and IY register index calculation. Specifically e.g., (IX-12+13) would
-generate code that is equivalent to (IX+25). This can be "fixed" writing the same as (IX+13-12),
-which then generates code that is correct i.e., (IX+1).
+Pasmo has issues with IX and IY register index calculation. Specifically e.g., (IX-12+13) would generate code that is equivalent to (IX-25). This is "dirty fixed" currently using parsing time patching that inserts "+0" immediately after IX or IY. So e.g., (IX-12+13) would become internally (IX+0-12+13), which then generates a correct result.
+</br>
 IX and IY index calculation has also been changed now so that indices greater than 127 or smaller
 than -128 will generate an error. Earlier it was possible to write e.g., (IX+255), which would have
 generated code equivalent to (IX-1).
