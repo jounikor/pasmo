@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE RELEASE)
 #set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} )
 #set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} -O3 )
 
-set(NDEBUG 1)
+set(NDEBUG TRUE)
 
 set(SOURCE_FILES
     asm.cpp
@@ -38,12 +38,20 @@ set(SOURCE_FILES
 
 add_executable(${TARGET} ${SOURCE_FILES})
 
+if (WIN32)
+	message(STATUS "Windows system")
+	#set(STRIPTARGET ${TARGET}.exe)
+else()
+	message(STATUS "non-Windows system")
+	#set(STRIPTARGET ${TARGET})
+endif(WIN32)
+
 if (CMAKE_BUILD_TYPE MATCHES RELEASE)
     message(STATUS "kukkuu pulu")
     add_custom_command(TARGET ${TARGET}
         POST_BUILD 
-        COMMAND strip ${TARGET}
-    )
+	COMMAND strip $<TARGET_FILE:${TARGET}>
+)
 endif (CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 
