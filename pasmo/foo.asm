@@ -21,6 +21,9 @@ zzz     ds foof
 
     ORG $8000       ; -> fixed at BANK2
 
+
+    STACK $6000
+
 main:
     ld  ix,main
     ld  a,(ix+0-2)
@@ -34,7 +37,9 @@ main:
 
     ld  hl,main
     ld  a,(test.foo)
+nn  jr  nn
     ret
+
     ret
     ret
  
@@ -54,7 +59,7 @@ bank4:
     ret
    
     if 1 
-    BANK    2
+    BANK    6
     ORG     $c028
 bank5:
     ld  bc,bank5

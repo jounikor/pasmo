@@ -939,6 +939,7 @@ public:
 	void emittap128 (std::ostream & out);
 	void emittzxbas (std::ostream & out);
 
+    void emitcommonsnaheader(std::ostream & out, bool sna48 );
 	void emitsna(std::ostream & out);
 	void emitsna128(std::ostream & out);
 
@@ -951,7 +952,14 @@ public:
 	void emitmsx (std::ostream & out);
 	void dumppublic (std::ostream & out);
 	void dumpsymbol (std::ostream & out);
+    
+    void setusr0(bool u) { usr0 = u; }
+    void settrdos(bool t) { trdos = t; } 
+    bool getusr0() const { return usr0; }
+    bool gettrdos() const { return trdos; }
 private:
+    bool usr0;
+    bool trdos;
 	void operator = (const Asm::In &); // Forbidden.
 
 	void setentrypoint (address addr);
@@ -1390,6 +1398,8 @@ Asm::In::In (MemMap& map) :
 	pcurrentmframe (0),
     mem(map)
 {
+    usr0 = false;
+    trdos = false;
 }
 
 Asm::In::In (const Asm::In & in) :
@@ -1416,6 +1426,8 @@ Asm::In::In (const Asm::In & in) :
 	pcurrentmframe (0),
     mem(in.mem)
 {
+    usr0 = false;
+    trdos = false;
 }
 
 Asm::In::~In ()
@@ -6405,17 +6417,150 @@ void Asm::In::writecdtcode (std::ostream & out)
 		throw ErrorOutput;
 }
 
+void Asm::In::emitcommonsnaheader(std::ostream & out, bool sna48)
+{
+
+    if (sna48) {
+	    // make room on stack for PC
+	    stacktop -= 2;
+    }
+
+	// write header, keep discrete for now
+	out.put(0); // I
+	out.put(0); // L'
+	out.put(0); // H'
+	out.put(0); // E'
+	out.put(0); // D'
+	out.put(0); // C'
+	out.put(0); // B'
+	out.put(0); // F'
+	out.put(0); // A'
+	out.put(0); // L
+	out.put(0); // H
+	out.put(0); // E
+	out.put(0); // D
+	out.put(0); // C
+	out.put(0); // B
+	out.put(0); // IYl
+	out.put(0); // IYh
+	out.put(0); // IXl
+	out.put(0); // IXh
+	out.put(4); // IFF2
+	out.put(0); // R
+	out.put(0); // F
+	out.put(0); // A
+	out.put(lobyte(stacktop)); // SP
+	out.put(hibyte(stacktop)); // SP
+	out.put(1); // IM
+	out.put(7); // Border Color
+
+	// set PAPER 7 INK 0
+	//::memset(mem + 22528, 7 << 3, 768);
+
+    if (sna48) {
+        // put entry point on stack or throw error if there isn't one
+	    if (hasentrypoint) {
+		    mem[stacktop	] = lobyte(entrypoint);
+		    mem[stacktop + 1] = hibyte(entrypoint);
+	    } else{
+		    throw ErrorSNAOutput;
+	    }
+    }
+}
+
 void Asm::In::emitsna128(std::ostream & out)
 {
-	message_emit("SNA128");
-	// TBD
+    if (mem.gotpaged()) {
+        if (debugtype != NoDebug)
+            * pout << "Emiting SNA 128K file.\n";
+
+	    message_emit("SNA128");
+        emitcommonsnaheader(out,false);
+
+        // Emit SNA 128K specific header..
+
+        int bankarr[3] = {5,2,0};
+        int bank = mem.getcurrentbank();
+        byte bankmem[Bank::banksize];
+        int pos, i;
+        
+        bankarr[2] = bank;
+        
+        // Write RAM banks 5 and 2.. note this not necessarily true for
+        // +3 using 64K modes.. well that is not supported anyways, so if you
+        // have defined +3 memory layout using special paging mode your bad.
+
+        if (debugtype != NoDebug)
+            *pout << "SNA 128K currently paged bank: " << bank << "\n";
+       
+        for (i = 0; i < 3; i++) {
+            mem.setcurrentbank(bankarr[i]);
+
+            for (pos = 0; pos < Bank::banksize; pos++) {
+                bankmem[pos] = mem[0xc000+pos];
+            }
+            out.write(reinterpret_cast<char *>(bankmem), Bank::banksize);
+        }
+        
+        // Write rest of the SNA 128K header..
+
+	    if (hasentrypoint) {
+		    out.put(lobyte(entrypoint));        // PC
+		    out.put(hibyte(entrypoint));
+	    } else{
+		    throw ErrorSNAOutput;
+	    }
+
+        // The following switches should really be configurable..
+
+        if ( getusr0() ) {        
+            if (debugtype != NoDebug)
+                *pout << "Select normal screen, 48K Basic ROM, bank " << bank << "\n";
+            out.put(0x10 | bank);               // Port $7ffd = select normal screen, 48K Basic ROM and current bank
+        } else {
+            if (debugtype != NoDebug)
+                *pout << "Select normal screen, 128K Editor/Menu ROM, bank " << bank << "\n";
+            out.put(bank);                      // Port $7ffd = select normal screen, 128K ROM and current bank
+        }
+
+        if ( gettrdos() ) {
+            if (debugtype != NoDebug)
+                *pout << "TR-DOS ROM paged in\n";
+            out.put(1);                         // TR-DOS not paged
+        } else {
+            out.put(0);                         // TR-DOS not paged
+        }
+
+        // Remaining RAM banks in ascending order
+
+        for (i = 0; i < 8; i++) {
+            if (i == bank || i == 2 || i == 5) {
+                continue;
+            }
+            
+            mem.setcurrentbank(i);
+            if (debugtype != NoDebug)
+                *pout << "  Saving remaining bank: " << i << "\n";
+            
+            for (pos = 0; pos < Bank::banksize; pos++) {
+                bankmem[pos] = mem[0xc000+pos];
+            }
+            out.write(reinterpret_cast<char *>(bankmem), Bank::banksize);
+        }
+    } else {
+        if (debugtype != NoDebug)
+            * pout << "Switching to normal SNA file.\n";
+        emitsna(out);
+    }
 }	
 
 
 void Asm::In::emitsna(std::ostream & out)
 {
 	message_emit("SNA");
-	
+    emitcommonsnaheader(out,true);
+
+#if 0
 	// make room on stack for PC
 	stacktop -= 2;
 
@@ -6461,7 +6606,7 @@ void Asm::In::emitsna(std::ostream & out)
 	{
 		throw ErrorSNAOutput;
 	}
-
+#endif
 	// write 48K RAM
 	out.write(reinterpret_cast<char *>(mem + 16384), 49152);
 }
@@ -7204,6 +7349,16 @@ void Asm::dumppublic (std::ostream & out)
 void Asm::dumpsymbol (std::ostream & out)
 {
 	pin->dumpsymbol (out);
+}
+
+void Asm::settrdos(bool u)
+{
+	pin->settrdos (u);
+}
+
+void Asm::setusr0(bool u)
+{
+	pin->setusr0 (u);
 }
 
 // End of asm.cpp
