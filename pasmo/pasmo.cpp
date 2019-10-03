@@ -83,7 +83,10 @@ const string opttzx       ("--tzx");
 const string opttzxbas    ("--tzxbas");
 const string optw8080     ("--w8080");
 const string optsna       ("--sna");
-const string opthelp      ("--help");       // JiK: to be completed.
+const string optsna128    ("--sna128");
+const string optusr0      ("--usr0");
+const string opttrdos     ("--trdos");
+const string opthelp      ("--help");
 
 
 class Options {
@@ -105,6 +108,8 @@ public:
 	void apply (Asm & assembler) const;
     MemMap& getmemmap();
     bool getdumpmemmap() const { return dumpmemmap; }
+    bool getusr0() const;
+    bool gettrdos() const;
 private:
 	emitfunc_t emitfunc;
 	static const emitfunc_t emitdefault;
@@ -121,6 +126,8 @@ private:
 	bool warn8080;
 	bool mode86;
 	bool pass3;
+    bool usr0;
+    bool trdos;
 
 	vector <string> includedir;
 	vector <string> labelpredef;
@@ -134,6 +141,17 @@ private:
 
 
 const Options::emitfunc_t Options::emitdefault (& Asm::emitobject);
+
+bool Options::getusr0() const
+{
+    return usr0;
+}
+
+bool Options::gettrdos() const
+{
+    return trdos;
+}
+
 
 MemMap& Options::getmemmap()
 {
@@ -167,6 +185,8 @@ Options::Options (int argc, char * * argv) :
 	mode86 (false),
 	pass3 (false),
     dumpmemmap(false),
+    usr0(false),
+    trdos(false),
     memmap(NULL)
 {
 	int argpos;
@@ -183,13 +203,16 @@ Options::Options (int argc, char * * argv) :
 			emitfunc= & Asm::emitcmd;
 		else if (arg == optpass3)
 			pass3= true;
-		else if (arg == optplus3dos)
+		else if (arg == optplus3dos) {
+            memmap = new MapPlus3dos;
 			emitfunc= & Asm::emitplus3dos;
-		else if (arg == opttap)
+		} else if (arg == opttap) {
+            memmap = new MapSpectrum48;
 			emitfunc= & Asm::emittap;
-		else if (arg == opttzx)
+		} else if (arg == opttzx) {
+            memmap = new MapSpectrum48;
 			emitfunc= & Asm::emittzx;
-		else if (arg == optcdt)
+		} else if (arg == optcdt)
 			emitfunc= & Asm::emitcdt;
 		else if (arg == opttapbas) {
             memmap = new MapSpectrum48;
@@ -208,9 +231,16 @@ Options::Options (int argc, char * * argv) :
 			emitfunc= & Asm::emitamsdos;
 		else if (arg == optmsx)
 			emitfunc= & Asm::emitmsx;
-		else if (arg == optsna)
+		else if (arg == optsna128) {
+            memmap = new MapSpectrum128;
+			emitfunc= & Asm::emitsna128;
+		} else if (arg == optsna)
 			emitfunc= & Asm::emitsna;
-		else if (arg == optpublic)
+		else if (arg == optusr0)
+            usr0 = true;
+		else if (arg == opttrdos)
+            trdos = true;
+        else if (arg == optpublic)
 			emitpublic= true;
 		else if (arg == optname)
 		{
@@ -349,6 +379,8 @@ int doit (int argc, char * * argv)
 	// Assemble.
 
 	Asm assembler(option.getmemmap());
+    assembler.setusr0(option.getusr0());
+    assembler.settrdos(option.gettrdos());
 
 	option.apply (assembler);
 

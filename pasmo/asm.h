@@ -44,17 +44,20 @@ public:
 	void emitplus3dos (std::ostream & out);
 
 	void emittap (std::ostream & out);
-    void emitpagedtap (std::ostream & out);
+	void emitpagedtap (std::ostream & out);
 	void emittzx (std::ostream & out);
 	void emitcdt (std::ostream & out);
 
 	void emittapbas (std::ostream & out);
-    void emittapbas128 (std::ostream & out);
-    void emittap128 (std::ostream & out);
+	void emittapbas128 (std::ostream & out);
+	void emittap128 (std::ostream & out);
 	void emittzxbas (std::ostream & out);
 	void emitcdtbas (std::ostream & out);
 
 	void emitsna(std::ostream & out);
+	void emitsna128(std::ostream & out);
+    void setusr0(bool u);
+    void settrdos(bool t); 
 
 	void emithex (std::ostream & out);
 	void emitamsdos (std::ostream & out);
@@ -65,8 +68,10 @@ public:
 	void emitmsx (std::ostream & out);
 	void dumppublic (std::ostream & out);
 	void dumpsymbol (std::ostream & out);
+
 private:
-	Asm (const Asm & a); // Forbidden
+    //
+    Asm (const Asm & a); // Forbidden
 	void operator = (const Asm &); // Forbidden
 public:
 	// Make it public to simplify implementation.

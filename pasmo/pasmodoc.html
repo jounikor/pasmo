@@ -64,6 +64,8 @@ Current Pasmo version: 0.5.2
 	<li><a href="#codegenplus3dos">--plus3dos mode.</a></li>
 	<li><a href="#codegenamsdos">--amsdos mode.</a></li>
 	<li><a href="#codegenmsx">--msx mode.</a></li>
+	<li><a href="#codegensna">--sna mode.</a></li>
+	<li><a href="#codegensna128">--sna128 mode.</a></li>
 	<li><a href="#codegensymbol">Symbol table.</a></li>
 	</ul>
 </li>
@@ -355,6 +357,27 @@ Generate the object file in Amsdos format.
 Generate the object file in MSX format.
 </dd>
 
+<dt>--sna</dt>
+<dd>
+Generate the object file in SNA format.
+</dd>
+
+<dt>--sna128</dt>
+<dd>
+Generate the object file in SNA 128K format. If not banking has been used the output revets back to SNA format.
+</dd>
+
+<dt>--usr0</dt>
+<dd>
+Controls the SNA 128K port $7ffd ROM paging. Default is ZX Spectrum 128K ROM and --usr0 selects ZX
+Spectrum 48K Basic ROM. 
+</dd>
+
+<dt>--trdos</dt>
+<dd>
+Controls the SNA 128K TR-DOS ROM paging. --trdos pages in the TR-DOS ROM. 
+</dd>
+
 <dt>--public</dt>
 <dd>
 Only the public symbols table is generated, using the file.symbol name,
@@ -413,6 +436,7 @@ assembler syntax.
 Dumps the paged memory map information and details of all banks.
 </dd>
 </dl>
+
 
 <p>
 When no option for code generation is specified, --bin is used by
@@ -576,6 +600,19 @@ directive).
 
 <p>
 Generate the object file with header for use with BLOAD in MSX Basic.
+</p>
+
+<h3><a name="codegensna">--sna mode</a></h3>
+
+<p>
+With the --sna option generate an object file in SNA format.
+</p>
+
+<h3><a name="codegensna128">--sna128 mode</a></h3>
+
+<p>
+With the --sna128 option generate an object file in SNA 128K format. If not banking has been used the output revets back to SNA format.
+
 </p>
 
 <h3><a name="codegensymbol">Symbol table</a></h3>
@@ -1477,9 +1514,8 @@ The same may be done for the other formats supported.
 
 <h2><a name="bugs">Bugs</a>.</h2>
 <p>
-Pasmo has issues with IX and IY register index calculation. Specifically e.g., (IX-12+13) would
-generate code that is equivalent to (IX+25). This can be "fixed" writing the same as (IX+13-12),
-which then generates code that is correct i.e., (IX+1).
+Pasmo has issues with IX and IY register index calculation. Specifically e.g., (IX-12+13) would generate code that is equivalent to (IX-25). This is "dirty fixed" currently using parsing time patching that inserts "+0" immediately after IX or IY. So e.g., (IX-12+13) would become internally (IX+0-12+13), which then generates a correct result.
+</br>
 IX and IY index calculation has also been changed now so that indices greater than 127 or smaller
 than -128 will generate an error. Earlier it was possible to write e.g., (IX+255), which would have
 generated code equivalent to (IX-1).
@@ -1499,12 +1535,13 @@ More suggestions about that are wellcome.
 
 <h2><a name="contributions">Contributions</a>.</h2>
 <p>
- (c) 2018-9 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta4):
+ (c) 2018-9 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta6.paged):
  <ul>
    <li>Added BANKed memory support, related directives and command line options. 
    <li>Added STRUCT/ENDS support and related directives. 
    <li>Added DUP/EDUP support. 
    <li>Modified IX and IY index calculations, see <a href="#bugs">Bugs</a>. 
+   <li>Added SNA 128K code generation support.
    </li>
  </ul>
 </p>
