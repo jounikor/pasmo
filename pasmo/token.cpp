@@ -165,7 +165,7 @@ const NameType nt []= {
 	// C is listed as flag.
 	NT (A),
 	NT (AF),
-	NT (A32),
+	//NT (A32),
 	NameType ("AF'", TypeAFp),
 	NT (B),
 	NT (BC),
@@ -227,6 +227,7 @@ const NameType nt []= {
     NT (ENDS),
     NTD (DUP,REPT),
     NTD (EDUP,ENDM),
+    NT (DG),
 
 	// Directives with .
 	NT_ (ERROR),

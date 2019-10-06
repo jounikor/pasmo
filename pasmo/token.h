@@ -148,7 +148,7 @@ enum TypeToken {
 	// C is listed as flag.
 	TypeA,
 	TypeAF,
-	TypeA32,
+	//TypeA32,
 	TypeAFp, // AF'
 	TypeB,
 	TypeBC,
@@ -208,6 +208,7 @@ enum TypeToken {
     TypeBANK,
     TypeSTRUCT,
     TypeENDS,
+    TypeDG,
 
 	// Directives with .
 	Type_ERROR,
