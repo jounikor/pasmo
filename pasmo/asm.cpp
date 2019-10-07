@@ -5545,6 +5545,9 @@ void Asm::In::parseDG (Tokenizer & tz )
         throw InvalidDGValue;
     }
 
+    // remove white spaces
+    str.erase(std::remove_if(str.begin(),str.end(),isspace), str.end());
+
     if (str.length() % 8 != 0) {
         throw InvalidDGLength;
     }

@@ -101,6 +101,7 @@ Current Pasmo version: 0.5.2
 	<li><a href="#dirds">DS</a></li>
 	<li><a href="#dirdup">DUP</a></li>
 	<li><a href="#dirdw">DW</a></li>
+	<li><a href="#dirdg">DG</a></li>
 	<li><a href="#diredup">EDUP</a></li>
 	<li><a href="#direlse">ELSE</a></li>
 	<li><a href="#dirend">END</a></li>
@@ -963,6 +964,41 @@ Equivalent to <a href="#dirrept">REPT</a>. This is for sjasm compatability.
 Define Word. The argument is a comma separated list of numeric
 expressions. Each numeric expression is evaluated as a two byte word
 and the result inserted in the code in the Z80 word format.
+</dd>
+
+<dt><a name="dirdg">DG</a></dt>
+<dd>
+Define a graphics character - adding a bit of compatibility with the Zeus assember. The argument is
+a list of character with length multiple of 8. DG takes "." "_" or "-" as indicating a zero bit, and
+any other character indicating a one bit.
+</p>
+The DG ignores spaces to its best capability, so you can use them for formatting if you like. However, using
+a non-string version of DG any reserved character like a register name will confuse the parser and
+cause an error.
+</p>
+Following examples are all valid DG representations:
+<pre>
+    dg  x x x x x x x x - G - G - g - g
+    dg  "x x x x x x x x - a - b - c - d"
+    dg  --xx..xx__XX--@@....xxxx
+    dg  xxxx....x.x.x.x.x.x.x.x.
+    dg  xxxx.... x.x.x.x. x.x.x.x.
+    dg  "--xx--xx"
+    dg  .x.x.x.x
+    DG  X-X-X-X-
+    dg  "--xx--xx"
+</pre>
+The following will output bytes: $10,$3C,$50,$38,$14,$7B,$10,$00
+<pre>
+    dg ---X----
+    dg --XXXX--
+    dg -X-X----
+    dg --XXX---
+    dg ---X-X--
+    dg -XXXX---
+    dg ---X----
+    dg --------
+</pre>
 </dd>
 
 <dt><a name="diredup">EDUP</a></dt>
