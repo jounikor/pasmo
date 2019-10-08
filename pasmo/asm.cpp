@@ -136,6 +136,8 @@ runtime_error IsPredefined ("Can't redefine, is predefined");
 runtime_error OutOfSyncPRL ("PRL genration failed: out of sync");
 runtime_error RedefinedSTRUCT("Invalid definition, STRUCT name already defined");
 
+runtime_error InvalidDGValue ("Failed to parse DG value string");
+runtime_error InvalidDGLength ("DG value is not multiple of 8");
 
 class Unimplemented : public logic_error {
 public:
@@ -1161,6 +1163,7 @@ private:
 	void parseLOCAL (Tokenizer & tz);
 	void parsePROC (Tokenizer & tz);
 	void parseENDP (Tokenizer & tz);
+    void parseDG (Tokenizer & tz );
 
 	void parse_ERROR (Tokenizer & tz);
 	void parse_WARNING (Tokenizer & tz);
@@ -2654,6 +2657,9 @@ void Asm::In::parsegeneric (Tokenizer & tz, Token tok)
 	case TypeDEFM:
 		parseDEFB (tz);
 		break;
+    case TypeDG:
+        parseDG (tz);
+        break;
 	case TypeDEFW:
 	case TypeDW:
 		parseDEFW (tz);
@@ -5511,6 +5517,65 @@ void Asm::In::parseSET (Tokenizer & tz)
 {
 	dobit (tz, 0xC0, "SET");
 }
+
+void Asm::In::parseDG (Tokenizer & tz )
+{
+    Token tok = tz.gettoken();
+
+    std::string str; 
+
+    switch (tok.type()) {
+    case TypeLiteral:
+        str = tok.str();
+        break;
+    case TypeMinus:
+    case TypeIdentifier:
+        tz.ungettoken();
+
+        for (;;) {
+            tok = tz.gettoken();
+            if (tok.type() != TypeIdentifier && tok.type() != TypeMinus) {
+                break;
+            }
+            str += tok.str();
+        }
+        //tz.ungettoken();
+        break;
+    default:
+        throw InvalidDGValue;
+    }
+
+    // remove white spaces
+    str.erase(std::remove_if(str.begin(),str.end(),isspace), str.end());
+
+    if (str.length() % 8 != 0) {
+        throw InvalidDGLength;
+    }
+
+    int i, j;
+
+    for (i = 0; i < str.length() / 8; i++) {
+        byte out = 0;
+        for (j = 0; j < 8; j++) {
+            switch (str[i*8 + j]) {
+            case '.': case '-': case '_':
+                out <<= 1;
+                break;
+            default:
+                out <<= 1;
+                out |= 1;
+                break;
+            }
+        }
+        gendata(out);
+    }
+    
+    ostringstream oss;
+    oss << "DG of " << i << " bytes with value '" << str << "'";
+    showcode (oss.str () );
+}
+
+
 
 void Asm::In::parseDEFB (Tokenizer & tz)
 {

@@ -77,7 +77,17 @@ dataa:
     ds  foo
     ds  foo
 
+    dg  x x x x x x x x - G - G - g - g
+    dg  "x x x x x x x x - a - b - c - d"
+    dg  --xx..xx__XX--@@....xxxx
+    dg  xxxx....x.x.x.x.x.x.x.x.
+    dg  xxxx.... x.x.x.x. x.x.x.x.
+    dg  "--xx--xx"
+    dg  .x.x.x.x
+    DG  X-X-X-X-
+    dg  "--xx--xx"
 
+    ds  foo
 
     END main
 
