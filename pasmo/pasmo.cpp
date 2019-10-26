@@ -242,7 +242,9 @@ Options::Options (int argc, char * * argv) :
             trdos = true;
         else if (arg == optpublic)
 			emitpublic= true;
-		else if (arg == optname)
+		else if (arg == opthelp)
+            throw Usage();
+        else if (arg == optname)
 		{
 			++argpos;
 			if (argpos >= argc)
@@ -454,78 +456,81 @@ int doit (int argc, char * * argv)
 
 void usage(char *name)
 {
-    *perr << "Usage: pasmo [options] file.asm file.bin [file.symbol [file.publics] ]\n\n";
+    *perr << "Usage: pasmo [options] file.asm file.bin [file.symbol [file.publics]]\n\n";
     *perr << "  Where 'file.asm' is the source file, 'file.bin' is the object\n" \
              "  file to be created and optionally 'file.symbol' is the file where\n" \
              "  the symbol table will be written and 'file.publics' is the file for\n" \
              "  the public symbols table.\n\n";
 
     *perr << "  Options are one of more of the following:\n";
-    *perr << "    -d              Show debug info during second pass of assembly.\n";
-    *perr << "    -1              Show debug info during both passes of assembly.\n";
-    *perr << "    -8 or --w8080   Show warnings when Z80 instructions that have no\n" \
-             "                    equivalent in 8080 are used. Makes easy to write\n" \
-             "                    programs for 8080 processor using Z80 asm syntax.\n";
-    *perr << "    -v              Verbose mode.\n";
-    *perr << "    -I path         Add <path> to search files for INCLUDE and INCBIN.\n";
-    *perr << "    -B or --bracket Use bracket only mode. In this mode the parenthesis\n" \
-             "                    are valid only in expressions, for indirections brackets\n" \
-             "                    must be used.\n";
-    *perr << "    -E or --equ     Predefine a symbol. Predefined symbol are treated in a\n" \
-             "                    similar way as defineds with EQU.\n";
-    *perr << "    --usr0          Controls the SNA 128K port $7ffd ROM paging. Default is\n" \
-             "                    ZX Spectrum 128K ROM and --usr0 selects ZX Spectrum 48K\n" \
-             "                    Basic ROM.\n";
-    *perr << "    --trdos         Controls the SNA 128K TR-DOS ROM paging. --trdos pages in\n"\
-             "                    the TR-DOS ROM.\n";
-    *perr << "    --public        Only the public symbols table is generated, using the\n" \
-             "                    file.symbol name, file.symbol must not be specified when\n" \
-             "                    using this option.\n";
-    *perr << "    --name name     Name to put in the header in the formats that use it. If\n" \
-             "                    unspecified the object file name will be used.\n";
-    *perr << "    -err            Direct error messages to standard output instead of error\n" \
-             "                    output (except for errors in options).\n";
-    *perr << "    --nocase        Make identifiers case insensitive.\n";
-    *perr << "    --alocal        Use autolocal mode. In this mode all labels that begins\n" \
-             "                    with '_' are locals.\n";
-    *perr << "    --memmap        Dumps the paged memory map information and details of all\n" \
-             "                    banks.\n";
+    *perr << "    --help        This help output.\n";
+    *perr << "    -d            Show debug info during second pass of assembly.\n";
+    *perr << "    -1            Show debug info during both passes of assembly.\n";
+    *perr << "    -8, --w8080   Show warnings when Z80 instructions that have no\n" \
+             "                  equivalent in 8080 are used. Makes easy to write\n" \
+             "                  programs for 8080 processor using Z80 asm syntax.\n";
+    *perr << "    -v            Verbose mode.\n";
+    *perr << "    -I path       Add <path> to search files for INCLUDE and INCBIN.\n";
+    *perr << "    -B, --bracket Use bracket only mode. In this mode the parenthesis\n" \
+             "                  are valid only in expressions, for indirections brackets\n" \
+             "                  must be used.\n";
+    *perr << "    -E, --equ     Predefine a symbol. Predefined symbol are treated in a\n" \
+             "                  similar way as defineds with EQU.\n";
+    *perr << "    --usr0        Controls the SNA 128K port $7ffd ROM paging. Default is\n" \
+             "                  ZX Spectrum 128K ROM and --usr0 selects ZX Spectrum 48K\n" \
+             "                  Basic ROM.\n";
+    *perr << "    --trdos       Controls the SNA 128K TR-DOS ROM paging. --trdos pages in\n"\
+             "                  the TR-DOS ROM.\n";
+    *perr << "    --public      Only the public symbols table is generated, using the\n" \
+             "                  file.symbol name, file.symbol must not be specified when\n" \
+             "                  using this option.\n";
+    *perr << "    --name name   Name to put in the header in the formats that use it. If\n" \
+             "                  unspecified the object file name will be used.\n";
+    *perr << "    -err          Direct error messages to standard output instead of error\n" \
+             "                  output (except for errors in options).\n";
+    *perr << "    --nocase      Make identifiers case insensitive.\n";
+    *perr << "    --alocal      Use autolocal mode. In this mode all labels that begins\n" \
+             "                  with '_' are locals.\n";
+    *perr << "    --memmap      Dumps the paged memory map information and details of all\n" \
+             "                  banks.\n";
 
 
     *perr << "  Code generation options:\n";
-    *perr << "    --bin           Generate the object file in raw binary format.\n";
-    *perr << "    --hex           Generate the object file in Intel HEX format.\n";
-    *perr << "    --prl           Generate the object file in CP/M PRL format.\n";
-    *perr << "    --cmd           Generate the object file in CP/M 86 CMD mode, using the\n" \
-             "                    8080 memory model of CP/M 86. Used in conjuction with\n" \
-             "                    the --86 option can easily generate CP/M 86 executables\n" \
-             "                    from CP/M 80 sources with minimal changes.\n";
-    *perr << "    --tap           Generates tap file with a code block, with the loading\n" \
-             "                    position set to the beginnig of the code so you can load\n" \
-             "                    it from Basic with a 'LOAD\"\" CODE' instruction.\n";
-    *perr << "    --tzx           Same as --tap but using TZX format.\n";
-    *perr << "    --cdt           Generate a cdt file with a code block, with the loading\n" \
-             "                    position set to the beginning of the code and the start\n" \
-             "                    address to the start point specified in the source, if\n" \
-             "                    any, so you can use RUN to execute it or LOAD to load it.\n";
-    *perr << "    --tapbas        Generates a TAP file with two parts: a Basic loader and a\n"; \
-             "                    code block with the object code. \n";
-    *perr << "    --tap128        The same as --tapbas128 but without the Basic loader.\n";
-    *perr << "    --tapbas128     Generates a TAP file with two or more parts: a Basic loader\n"; \
-             "                    with a banking support and one or more code blocks with the\n"; \
-             "                    object code and loads the code into appropriate banks.\n";
-    *perr << "    --tzxbas        Same as --tapbas but using TZX format instead of TAP.\n";
-    *perr << "    --cdtbas        Same as --tapbas but using CDT format instead of TAP and\n"; \
-             "                    with a Locomotive Basic loader instead of Spectrum Basic.\n";
-    *perr << "    --plus3dos      Generates an object file in plus3dos format, used by the\n"; \
-             "                    Spectrum +3 disks.\n";
-    *perr << "    --amsdos        Generates an object file with Amsdos header, used by the\n"; \
-             "                    Amstrad CPC on disk files.\n";
-    *perr << "    --msx           Generates an object file with header for use with BLOAD in\n"; \
-             "                    MSX Basic.\n";
-    *perr << "    --sna           Generates an object file in SNA format.\n";
-    *perr << "    --sna128        Generates an object file in SNA 128K format.\n";
-    *perr << "    --86            Generates 8086 code instead of Z80. This feature is experimental.\n";
+    *perr << "    --bin         Generate the object file in raw binary format.\n";
+    *perr << "    --hex         Generate the object file in Intel HEX format.\n";
+    *perr << "    --prl         Generate the object file in CP/M PRL format.\n";
+    *perr << "    --cmd         Generate the object file in CP/M 86 CMD mode, using the\n" \
+             "                  8080 memory model of CP/M 86. Used in conjuction with\n" \
+             "                  the --86 option can easily generate CP/M 86 executables\n" \
+             "                  from CP/M 80 sources with minimal changes.\n";
+    *perr << "    --tap         Generates tap file with a code block, with the loading\n" \
+             "                  position set to the beginnig of the code so you can load\n" \
+             "                  it from Basic with a 'LOAD\"\" CODE' instruction.\n";
+    *perr << "    --tzx         Same as --tap but using TZX format.\n";
+    *perr << "    --cdt         Generate a cdt file with a code block, with the loading\n" \
+             "                  position set to the beginning of the code and the start\n" \
+             "                  address to the start point specified in the source, if\n" \
+             "                  any, so you can use RUN to execute it or LOAD to load it.\n";
+    *perr << "    --tapbas      Generates a TAP file with two parts: a Basic loader and a\n" \
+             "                  code block with the object code. \n";
+    *perr << "    --tap128      The same as --tapbas128 but without the Basic loader.\n";
+    *perr << "    --tapbas128   Generates a TAP file with two or more parts: a Basic loader\n" \
+             "                  with a banking support and one or more code blocks with the\n" \
+             "                  object code and loads the code into appropriate banks.\n";
+    *perr << "    --tzxbas      Same as --tapbas but using TZX format instead of TAP.\n";
+    *perr << "    --cdtbas      Same as --tapbas but using CDT format instead of TAP and\n" \
+             "                  with a Locomotive Basic loader instead of Spectrum Basic.\n";
+    *perr << "    --plus3dos    Generates an object file in plus3dos format, used by the\n" \
+             "                  Spectrum +3 disks.\n";
+    *perr << "    --amsdos      Generates an object file with Amsdos header, used by the\n" \
+             "                  Amstrad CPC on disk files.\n";
+    *perr << "    --msx         Generates an object file with header for use with BLOAD in\n" \
+             "                  MSX Basic.\n";
+    *perr << "    --sna         Generates an object file in SNA format.\n";
+    *perr << "    --sna128      Generates an object file in SNA 128K format.\n";
+    *perr << "    --86          Generates 8086 code instead of Z80. This feature is\n" \
+             "                  experimental.\n";
+
 
 }
 
