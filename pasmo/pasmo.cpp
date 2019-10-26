@@ -493,6 +493,7 @@ void usage(char *name)
              "                  with '_' are locals.\n";
     *perr << "    --memmap      Dumps the paged memory map information and details of all\n" \
              "                  banks.\n";
+    *perr << "    --pass3       Set three pass assembling mode.\n"; 
 
 
     *perr << "  Code generation options:\n";
