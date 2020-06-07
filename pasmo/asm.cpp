@@ -2877,7 +2877,25 @@ void Asm::In::parseEQU (Tokenizer & tz, const std::string & label)
 {
 	TRF;
 
+	// Ugly fix..
+	
+	//tz.inserttoken( Toekn( address(0) ));
+	//tz.insett
+
 	Token tok= tz.gettoken ();
+
+	// This is a very ugly hack to EQU -something tokenizer.. We just
+	// patch runtime EQU -something to EQU 0-something
+	if (tok.type() == TypeMinus)
+	{
+		*pout << "EQU TypeMinus workaround applied\n";
+		tz.ungettoken();	
+		tz.inserttoken(Token(address(0)));
+		tok = tz.gettoken();
+	}
+
+
+
 	address value= parseexpr (false, tok, tz);
 	checkendline (tz);
 	bool islocal= setequorlabel (label, value);
