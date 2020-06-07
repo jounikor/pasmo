@@ -1,6 +1,10 @@
 
 
-foof    EQU 10
+foof    EQU 	10
+koe	EQU	-10-30
+koe1	EQU	0-10-30
+koe2	EQU	10-30
+
 
 
 testt    MACRO sBANK,src
