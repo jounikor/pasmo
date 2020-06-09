@@ -259,13 +259,23 @@ mapiniter::mapiniter ()
 		ASSERT (tt <= TypeLastName);
 		if (typeused [tt] )
 		{
-			cerr << "Type " << tt << " duplicated" << endl;
-			checkfailed= true;
+			cerr << "Type " << tt << " ('" << p->str << "')" << " duplicated" << endl;
+			
+            // It is questionable whether this needs to generate an assert, since the
+            // existing NTD macro allows overloading a single TokenType with multiple
+            // strings. Left intact for the time being..
+            checkfailed= true;
 		}
 		typeused [tt]= true;
 		#endif
+        
+        // In a case of duplicated TokenTypes there is many to one mapping
+        // from multiple strings to one type..
 		tmap [p->str]= tt;
-		invmap [tt]= p->str;
+
+	    // In a case of duplicated TypeTokens the string of the latest
+        // gets used in the type to string mapping..
+        invmap [tt]= p->str;
 	}
 
 	#ifndef NDEBUG
@@ -274,7 +284,7 @@ mapiniter::mapiniter ()
 	{
 		if (! typeused [tt] )
 		{
-			cerr << "Type " << tt << " unasigned" << endl;
+			cerr << "Type " << tt << " unassigned" << endl;
 			checkfailed= true;
 		}
 	}

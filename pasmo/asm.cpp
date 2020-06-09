@@ -2877,11 +2877,6 @@ void Asm::In::parseEQU (Tokenizer & tz, const std::string & label)
 {
 	TRF;
 
-	// Ugly fix..
-	
-	//tz.inserttoken( Toekn( address(0) ));
-	//tz.insett
-
 	Token tok= tz.gettoken ();
 
 	// This is a very ugly hack to EQU -something tokenizer.. We just
@@ -2893,8 +2888,6 @@ void Asm::In::parseEQU (Tokenizer & tz, const std::string & label)
 		tz.inserttoken(Token(address(0)));
 		tok = tz.gettoken();
 	}
-
-
 
 	address value= parseexpr (false, tok, tz);
 	checkendline (tz);

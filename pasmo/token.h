@@ -141,7 +141,7 @@ enum TypeToken {
 	TypeSRL,
 	TypeSUB,
     //TypeSWAPNIB,
-    TypeTEST,
+    //TypeTEST,
 	TypeXOR,
 
 	// Registers
@@ -208,6 +208,8 @@ enum TypeToken {
     TypeBANK,
     TypeSTRUCT,
     TypeENDS,
+        TypeDUP,
+        TypeEDUP,
     TypeDG,
 
 	// Directives with .

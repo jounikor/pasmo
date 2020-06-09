@@ -22,11 +22,12 @@ Use and distribution allowed under the terms of the GPL license.
 </p>
 
 <p>
-Last revision date: 19-apr-2005
+Last revision date: 19-apr-2005</br>
+Additional <a href="#contributions">contributions</a>.
 </p>
 
 <p>
-Current Pasmo version: 0.5.2
+Current Pasmo version: 0.5.4.beta8.paged
 </p>
 
 <h2>Index.</h2>
@@ -968,7 +969,7 @@ and the result inserted in the code in the Z80 word format.
 
 <dt><a name="dirdg">DG</a></dt>
 <dd>
-Define a graphics character - adding a bit of compatibility with the Zeus assember. The argument is
+DG defines a graphics character and adding a bit of compatibility with the Zeus assember. The argument is
 a list of character with length multiple of 8. DG takes "." "_" or "-" as indicating a zero bit, and
 any other character indicating a one bit.
 </p>
@@ -1571,14 +1572,15 @@ More suggestions about that are wellcome.
 
 <h2><a name="contributions">Contributions</a>.</h2>
 <p>
- (c) 2018-9 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta6.paged):
+ (c) 2018-20 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta8.paged):
  <ul>
    <li>Added BANKed memory support, related directives and command line options. 
    <li>Added STRUCT/ENDS support and related directives. 
    <li>Added DUP/EDUP support. 
-   <li>Modified IX and IY index calculations, see <a href="#bugs">Bugs</a>. 
+   <li>Modified IX/IY index calculations, see <a href="#bugs">Bugs</a>. 
    <li>Added SNA 128K code generation support.
-   </li>
+   <li>Applied the same hotfix to EQU calculation used with IX/IY index calculation to allow values
+   starting with '-'.
  </ul>
 </p>
 

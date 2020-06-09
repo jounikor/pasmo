@@ -21,7 +21,7 @@ using std::string;
 using std::vector;
 using std::runtime_error;
 
-const string pasmoversion ("0.5.4.beta7.paged");
+const string pasmoversion ("0.5.4.beta8.paged");
 
 
 class Usage { };
@@ -557,7 +557,8 @@ int main (int argc, char * * argv)
 	catch (Usage &)
 	{
 		cerr <<	"Pasmo version " << pasmoversion <<
-			" (C) 2004-2005 Julian Albo\n\n";
+			" (c) 2004-2005 Julian Albo (2018-20 Jouni Korhonen)\n\n";
+
         usage(argv[0]);
 	}
 	catch (...)
