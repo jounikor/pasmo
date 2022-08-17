@@ -1,4 +1,4 @@
-
+### Building ###
 This Pasmo distribution uses CMake. To build the project do the
 following steps:
   1) cd into directory where the source files are
@@ -12,4 +12,11 @@ Alternatively you can execute the build_all.sh script:
     or
   2) sh build_all.sh
 
-
+### Modifications done to this "fork": ###
+* Added BANKed memory support, related directives and command line options. 
+* Added STRUCT/ENDS support and related directives. 
+* Added DUP/EDUP support. 
+* Added DG support for Zeus compatibility.
+* Modified IX/IY index calculations, see <a href="#bugs">Bugs</a>. 
+** Added SNA 128K code generation support.
+* Applied the same hotfix to EQU calculation used with IX/IY index calculation to allow values starting with '-'.
