@@ -17,6 +17,9 @@ Alternatively you can execute the build_all.sh script:
 * Added STRUCT/ENDS support and related directives. 
 * Added DUP/EDUP support. 
 * Added DG support for Zeus compatibility.
-* Modified IX/IY index calculations, see <a href="#bugs">Bugs</a>. 
-** Added SNA 128K code generation support.
+* Modified IX/IY index calculations so that e.g, (IX-5) now produces correct code. 
+* Added SNA 128K code generation support.
 * Applied the same hotfix to EQU calculation used with IX/IY index calculation to allow values starting with '-'.
+
+### Examples ###
+See the "foo.asm" example code.
