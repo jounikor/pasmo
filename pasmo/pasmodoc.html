@@ -1,9 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"> 
+<!DOCTYPE html>
 <html>
 
 <head>
 
-<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1" >
+<meta charset="utf-8">
 
 <title>Pasmo documentation.</title>
 
@@ -14,7 +14,8 @@
 <h1>Pasmo documentation.</h1>
 
 <p>
-(C) 2004-2005 Juli&aacute;n Albo.
+(C) 2004-2022 Juli&aacute;n Albo.</br>
+(C) 2018-2023 Contributions by Jouni Korhonen. 
 </p>
 
 <p>
@@ -22,12 +23,11 @@ Use and distribution allowed under the terms of the GPL license.
 </p>
 
 <p>
-Last revision date: 19-apr-2005</br>
-Additional <a href="#contributions">contributions</a>.
+Last revision date: 05-mar-2022 (version 0.5.5)
 </p>
 
 <p>
-Current Pasmo version: 0.5.4.beta8.paged
+Current Pasmo version: 0.5.5.paged based on version 0.5.5
 </p>
 
 <h2>Index.</h2>
@@ -65,8 +65,8 @@ Current Pasmo version: 0.5.4.beta8.paged
 	<li><a href="#codegenplus3dos">--plus3dos mode.</a></li>
 	<li><a href="#codegenamsdos">--amsdos mode.</a></li>
 	<li><a href="#codegenmsx">--msx mode.</a></li>
-	<li><a href="#codegensna">--sna mode.</a></li>
-	<li><a href="#codegensna128">--sna128 mode.</a></li>
+	<li><a href="#codegensdrel">--sdrel mode.</a></li>
+	<li><a href="#codegentrs">--trs mode.</a></li>
 	<li><a href="#codegensymbol">Symbol table.</a></li>
 	</ul>
 </li>
@@ -113,6 +113,8 @@ Current Pasmo version: 0.5.4.beta8.paged
 	<li><a href="#direqu">EQU</a></li>
 	<li><a href="#direxitm">EXITM</a></li>
 	<li><a href="#dirif">IF</a></li>
+	<li><a href="#dirifdef">IFDEF</a></li>
+	<li><a href="#dirifndef">IFNDEF</a></li>
 	<li><a href="#dirinclude">INCLUDE</a></li>
 	<li><a href="#dirincbin">INCBIN</a></li>
 	<li><a href="#dirirp">IRP</a></li>
@@ -170,7 +172,7 @@ Current Pasmo version: 0.5.4.beta8.paged
 
 </ul>
 
-<h2><a name="intro">Introduction</a>.</h2>
+<h2><a id="intro">Introduction</a>.</h2>
 
 <p>
 Pasmo is a multiplatform Z80 cross-assembler, easy to compile and easy to
@@ -197,7 +199,7 @@ or CMD files for CP/M 86, by using
 This feature is experimental, use with care.
 </p>
 
-<h2><a name="install">Installation</a>.</h2>
+<h2><a id="install">Installation</a>.</h2>
 
 <p>
 Download Pasmo from
@@ -224,7 +226,7 @@ You have also an official Debian package for testing and
 unstable releases.
 </p>
 
-<h2><a name="command">Command line use</a>.</h2>
+<h2><a id="command">Command line use</a>.</h2>
 
 <p>
 Pasmo is invoked from command line as:
@@ -359,31 +361,20 @@ Generate the object file in Amsdos format.
 Generate the object file in MSX format.
 </dd>
 
-<dt>--sna</dt>
+<dt>--sdrel</dt>
 <dd>
-Generate the object file in SNA format.
+Generate the object file in sdcc .rel format.
 </dd>
 
-<dt>--sna128</dt>
+<dt>--trs</dt>
 <dd>
-Generate the object file in SNA 128K format. If not banking has been used the output revets back to SNA format.
-</dd>
-
-<dt>--usr0</dt>
-<dd>
-Controls the SNA 128K port $7ffd ROM paging. Default is ZX Spectrum 128K ROM and --usr0 selects ZX
-Spectrum 48K Basic ROM. 
-</dd>
-
-<dt>--trdos</dt>
-<dd>
-Controls the SNA 128K TR-DOS ROM paging. --trdos pages in the TR-DOS ROM. 
+Generate the object file in TRS-80 cmd format.
 </dd>
 
 <dt>--public</dt>
 <dd>
 Only the public symbols table is generated, using the file.symbol name,
-file.symbol must not be specified when using this option.
+file.publics must not be specified when using this option.
 </dd>
 
 <dt>--name</dt>
@@ -452,16 +443,16 @@ standard output. Error messages goes to error ouptut unless the --err
 option is used.
 </p>
 
-<h2><a name="codegen">Code generation modes</a>.</h2>
+<h2><a id="codegen">Code generation modes</a>.</h2>
 
-<h3><a name="codegendefault">Default mode</a></h3>
+<h3><a id="codegendefault">Default mode</a></h3>
 
 <p>
 If none of the code generation options is specified, then --bin mode is
 used by default.
 </p>
 
-<h3><a name="codegenbin">--bin mode</a></h3>
+<h3><a id="codegenbin">--bin mode</a></h3>
 
 <p>
 The --bin mode just dumps the code generated from the first
@@ -471,7 +462,7 @@ use a ORG 100H directive at the beginning of the code, or to
 generate blocks of code to be INCBINed in other programs.
 </p>
 
-<h3><a name="codegenhex">--hex mode</a></h3>
+<h3><a id="codegenhex">--hex mode</a></h3>
 
 <p>
 The --hex mode generates code in Intel HEX format. This format can
@@ -480,7 +471,7 @@ more easily than a binary format, and is also used in some PROM
 programming tools.
 </p>
 
-<h3><a name="codegenprl">--prl mode</a></h3>
+<h3><a id="codegenprl">--prl mode</a></h3>
 
 <p>
 The prl format is used in several variants of Digital Research CP/M
@@ -489,7 +480,7 @@ use in CP/M Plus, use for PRL files in MP/M is not supported because
 I don't have a MP/M system, real or emulated, where to test it.
 </p>
 
-<h3><a name="codegencmd">--cmd mode</a></h3>
+<h3><a id="codegencmd">--cmd mode</a></h3>
 
 <p>
 The --cmd option generates a CP/M 86 CMD mode, using the 8080 memory
@@ -497,7 +488,7 @@ model of CP/M 86. Used in conjuction with the --86 option can easily
 generate CP/M 86 executables from CP/M 80 sources with minimal changes.
 </p>
 
-<h3><a name="codegentap">--tap mode</a></h3>
+<h3><a id="codegentap">--tap mode</a></h3>
 
 <p>
 The --tap options generates a tap file with a code block, with the
@@ -507,13 +498,13 @@ from Basic with a
 instruction.
 </p>
 
-<h3><a name="codegentzx">--tzx mode</a></h3>
+<h3><a id="codegentzx">--tzx mode</a></h3>
 
 <p>
 Same as <a href="#codegentap">--tap</a> but using tzx format instead of tap.
 </p>
 
-<h3><a name="codegencdt">--cdt mode</a></h3>
+<h3><a id="codegencdt">--cdt mode</a></h3>
 
 <p>
 The --cdt options generates a cdt file with a code block, with the
@@ -526,7 +517,7 @@ to execute it or
 to load it.
 </p>
 
-<h3><a name="codegentapbas">--tapbas mode</a></h3>
+<h3><a id="codegentapbas">--tapbas mode</a></h3>
 
 <p>
 With the --tapbas option a tap file is generated with two parts:
@@ -562,21 +553,21 @@ number and I/O port $7ffd (32765) value. The basic loader uses system variable R
 the bank number from basic to the bank switching code.
 </p>
 
-<h3><a name="codegentzxbas">--tzxbas mode</a></h3>
+<h3><a id="codegentzxbas">--tzxbas mode</a></h3>
 
 <p>
 Same as <a href="#codegentapbas">--tapbas</a> but using tzx format instead
 of tap.
 </p>
 
-<h3><a name="codegencdtbas">--cdtbas mode</a></h3>
+<h3><a id="codegencdtbas">--cdtbas mode</a></h3>
 
 <p>
 Same as <a href="#codegentapbas">--tapbas</a> but using cdt format instead
 of tap and with a Locomotive Basic loader instead of Spectrum Basic.
 </p>
 
-<h3><a name="codegenplus3dos">--plus3dos mode</a></h3>
+<h3><a id="codegenplus3dos">--plus3dos mode</a></h3>
 
 <p>
 Generate the object file in plus3dos format, used by the Spectrum +3 disks.
@@ -585,7 +576,7 @@ The file can be loaded from Basic with a
 instruction.
 </p>
 
-<h3><a name="codegenamsdos">--amsdos mode</a></h3>
+<h3><a id="codegenamsdos">--amsdos mode</a></h3>
 
 <p>
 Generate the object file with Amsdos header, used by the Amstrad CPC
@@ -598,26 +589,27 @@ if an entry point has been specified in the source (see the
 directive).
 </p>
 
-<h3><a name="codegenmsx">--msx mode</a></h3>
+<h3><a id="codegenmsx">--msx mode</a></h3>
 
 <p>
 Generate the object file with header for use with BLOAD in MSX Basic.
 </p>
 
-<h3><a name="codegensna">--sna mode</a></h3>
+<h3><a id="codegensdrel">--sdrel mode</a></h3>
 
 <p>
-With the --sna option generate an object file in SNA format.
+The --sdrel option generates a .rel file for use with the sdcc linker.
+Under testing, use carefully.
 </p>
 
-<h3><a name="codegensna128">--sna128 mode</a></h3>
+<h3><a id="codegentrs">--tzx mode</a></h3>
 
 <p>
-With the --sna128 option generate an object file in SNA 128K format. If not banking has been used the output revets back to SNA format.
-
+The --trs option generates a TRS-80 cmd file.
+Under testing, use carefully.
 </p>
 
-<h3><a name="codegensymbol">Symbol table</a></h3>
+<h3><a id="codegensymbol">Symbol table</a></h3>
 
 <p>
 The symbol table generated contains all identifiers used in the program,
@@ -632,9 +624,9 @@ INCLUDE it in another source to create programs composed of several
 blocks.
 </p>
 
-<h2><a name="source">Source code format</a>.</h2>
+<h2><a id="source">Source code format</a>.</h2>
 
-<h3><a name="sourcegeneral">Generalities</a>.</h3>
+<h3><a id="sourcegeneral">Generalities</a>.</h3>
 
 <p>
 Source code files must be valid text files in the platform used. The use of,
@@ -675,9 +667,9 @@ when the same character has other meaning as prefix ('$' and '%', for
 example).
 </p>
 
-<h3><a name="sourcelit">Literals</a>.</h3>
+<h3><a id="sourcelit">Literals</a>.</h3>
 
-<h4><a name="sourcelitnum">Numeric literals</a>.</h4>
+<h4><a id="sourcelitnum">Numeric literals</a>.</h4>
 
 <p>
 Numeric literals can be written in decimal, binary, octal and hexadecimal
@@ -722,7 +714,7 @@ All numeric formats can have $ signs between the digits to improve
 readability. They are ignored.
 </p>
 
-<h4><a name="sourcelitstr">String literals</a>.</h4>
+<h4><a id="sourcelitstr">String literals</a>.</h4>
 
 <p>
 There are two formats of string literals: single or double quote
@@ -759,7 +751,7 @@ the numeric value of the character contained. This allows expressions
 such as 'A' + 80h to be evaluated as expected.
 </p>
 
-<h3><a name="sourceident">Identifiers</a>.</h3>
+<h3><a id="sourceident">Identifiers</a>.</h3>
 
 <p>
 Identifiers are the names used for labels, EQU and DEFL symbols and
@@ -794,7 +786,7 @@ Identifiers are case sensitive if the option --nocase is not used.
 When using --nocase, they are always converted to upper case.
 </p>
 
-<h3><a name="sourcefilename">File names</a>.</h3>
+<h3><a id="sourcefilename">File names</a>.</h3>
 
 <p>
 File names are used in the INCLUDE and INCBIN directives. They follow
@@ -818,7 +810,7 @@ In any other case all characteres until the next blank or the end of line
 are considered part of the file name. Blank characters are space and tab.
 </p>
 
-<h3><a name="sourcelabel">Labels</a>.</h3>
+<h3><a id="sourcelabel">Labels</a>.</h3>
 
 <p>
 A label can be placed at the beginning of any line, before any
@@ -868,7 +860,7 @@ table listing as 8 digit hexadecimal numbers, corresponding to the first
 use of the label in the source.
 </p>
 
-<h2><a name="directives">Directives</a>.</h2>
+<h2><a id="directives">Directives</a>.</h2>
 
 <p>
 List of directives supported in Pasmo, in alphabetical order.
@@ -876,51 +868,25 @@ List of directives supported in Pasmo, in alphabetical order.
 
 <dl>
 
-<dt><a name="direrror">.ERROR</a></dt>
+<dt><a id="direrror">.ERROR</a></dt>
 <dd>
 Generates an error during assembly if the line is actively used, that is,
 in a macro if it gets expanded, in an IF if the current branch is taken.
 All text following the directive is used as error message.
 </dd>
 
-<dt><a name="dirshift">.SHIFT</a></dt>
+<dt><a id="dirshift">.SHIFT</a></dt>
 <dd>
 Shift MACRO arguments, see <a href="#macros">the chapter about macros</a>.
 </dd>
 
-<dt><a name="dirwarning">.WARNING</a></dt>
+<dt><a id="dirwarning">.WARNING</a></dt>
 <dd>
 Same as <a href="#direrror">.ERROR</a> but emiting a a warning message
 instead of generating an error.
 </dd>
 
-<dt><a name="dirbank">BANK</a></dt>
-<dd>
-Sets the current active memory bank where code may be generated. Currently banking is only supported
-for ZX Spectrum (128, +2 and +3 non-flat 64K modes). In other targets the BANK does not cause a
-runtime error but has no effect as a flat non-banked memory map is used. The access to an active
-bank is determined from the current "address" i.e., when code is generated within $c000-$ffff
-bounds.  The banking tries to be clever in a sense that code can be written into banks through
-both fixed page slots and through banked page slot 3. For example, in ZX Spectrum128 (see <a
-href="#codegentapbas128">--tapbas128</a> option) the following
-code would generate "Mr.Spiv" to be written into $4000:
-<pre>
-    ORG $4000
-    DB  "Mr."
-
-    BANK 5
-    ORG $c003
-    DB  "Spiv"
-</pre>
-However, be warned that accessing a bank through both a fixed page and a banked page may generate
-code that was not what you intended. The overlap may be partial or entire and result to unexpected
-behaviour.
-</br>
-Currently BANK values from 0 to 7 are supported i.e., allowing a maximum 128K memory map. The banked
-TAP loader uses bank number 8 as an end value for bank loading.
-</dd>
-
-<dt><a name="dirdb">DB</a></dt>
+<dd><a id="dirdb">DB</a></dd>
 <dd>
 Define Byte. The argument is a comma separated list of string literals
 or numeric expressions. The string literals are inserted in the object
@@ -928,26 +894,26 @@ code, and the result of the numeric expression is inserted as a single
 byte, truncating it if needed.
 </dd>
 
-<dt><a name="dirdefb">DEFB</a></dt>
+<dt><a id="dirdefb">DEFB</a></dt>
 <dd>DEFine Byte, same as <a href="#dirdb">DB</a>.</dd>
 
-<dt><a name="dirdefl">DEFL</a></dt>
+<dt><a id="dirdefl">DEFL</a></dt>
 <dd>
 DEFine Label. Must be preced by a label. The argument must be a
 numeric expression, the result is assigned to the label. The label
 used can be redefined with other DEFL directive.
 </dd>
 
-<dt><a name="dirdefm">DEFM</a></dt>
+<dt><a id="dirdefm">DEFM</a></dt>
 <dd>DEFine Message, same as <a href="#dirdb">DB</a>.</dd>
 
-<dt><a name="dirdefs">DEFS</a></dt>
+<dt><a id="dirdefs">DEFS</a></dt>
 <dd>DEFine Space, same as <a href="#dirds">DS</a>.</dd>
 
-<dt><a name="dirdefw">DEFW</a></dt>
+<dt><a id="dirdefw">DEFW</a></dt>
 <dd>Same as <a href="#dirdw">DW</a>.</dd>
 
-<dt><a name="dirds">DS</a></dt>
+<dt><a id="dirds">DS</a></dt>
 <dd>
 Define Space. Take one or two comma separated arguments.
 The first or only argument is the amount of space to define,
@@ -955,18 +921,12 @@ in bytes. The second is the value used to fill the space,
 if absent 0 will be used.
 </dd>
 
-<dt><a name="dirdup">DUP</a></dt>
-<dd>
-Equivalent to <a href="#dirrept">REPT</a>. This is for sjasm compatability.
-</dd>
-
-<dt><a name="dirdw">DW</a></dt>
+<dt><a id="dirdw">DW</a></dt>
 <dd>
 Define Word. The argument is a comma separated list of numeric
 expressions. Each numeric expression is evaluated as a two byte word
 and the result inserted in the code in the Z80 word format.
 </dd>
-
 <dt><a name="dirdg">DG</a></dt>
 <dd>
 DG defines a graphics character and adding a bit of compatibility with the Zeus assember. The argument is
@@ -1002,15 +962,16 @@ The following will output bytes: $10,$3C,$50,$38,$14,$7B,$10,$00
 </pre>
 </dd>
 
-<dt><a name="diredup">EDUP</a></dt>
-<dd>Equivalent to <a href="#direndm">ENDM</a>. This is for sjasm compatibility.
+<dt><a name="dirdup">DUP</a></dt>
+<dd>
+Equivalent to <a href="#dirrept">REPT</a>. This is for sjasm compatability.
 </dd>
 
-<dt><a name="direlse">ELSE</a></dt>
+<dt><a id="direlse">ELSE</a></dt>
 <dd>See <a href="#dirif">IF</a>.
 </dd>
 
-<dt><a name="dirend">END</a></dt>
+<dt><a id="dirend">END</a></dt>
 <dd>
 Ends the assembly. All lines after this directive are ignored.
 If it has an argument is evaluated as a numeric expression and the result
@@ -1019,13 +980,13 @@ depends of the type of code generation used, may be none but even in this
 case may be used for documentation purposes.
 </dd>
 
-<dt><a name="direndif">ENDIF</a></dt>
+<dt><a id="direndif">ENDIF</a></dt>
 <dd>See <a href="#dirif">IF</a>.</dd>
 
-<dt><a name="direndm">ENDM</a></dt>
+<dt><a id="direndm">ENDM</a></dt>
 <dd>Ends a macro, see <a href="#macros">the chapter about macros</a>.</dd>
 
-<dt><a name="direndp">ENDP</a></dt>
+<dt><a id="direndp">ENDP</a></dt>
 <dd>Marks the end of a PROC block, see PROC.</dd>
 
 <dt><a name="dirends">ENDS</a></dt>
@@ -1033,18 +994,17 @@ case may be used for documentation purposes.
 Marks the end of a STRUCT block, see <a href="#dirstruct">STRUCT</a>.
 </dd>
 
-
-<dt><a name="direqu">EQU</a></dt>
+<dt><a id="direqu">EQU</a></dt>
 <dd>
 EQUate. Must be preceded by a label. The argument must be a numeric
 expression, the result is assigned to the label. The label used can't be
 redefined.
 </dd>
 
-<dt><a name="direxitm">EXITM</a></dt>
+<dt><a id="direxitm">EXITM</a></dt>
 <dd>Exits a macro, see <a href="#macros">the chapter about macros</a>.</dd>
 
-<dt><a name="dirif">IF</a></dt>
+<dt><a id="dirif">IF</a></dt>
 <dd>
 Contional assembly. The argument must be a numeric expression, a result
 of 0 is considered as false, any other as true. If the argument is true the
@@ -1058,7 +1018,17 @@ IF can be nested, in that case each ELSE and ENDIF takes effect only on his
 corresponding IF, but ENDM ends all pending IF sections.
 </dd>
 
-<dt><a name="dirinclude">INCLUDE</a></dt>
+<dt><a id="dirifdef">IFDEF</a></dt>
+<dd>
+IFDEF symbol is a shortcut for IF DEFINED symbol.
+</dd>
+
+<dt><a id="dirifndef">IFNDEF</a></dt>
+<dd>
+IFNDEF symbol is a shortcut for IF ! DEFINED symbol.
+</dd>
+
+<dt><a id="dirinclude">INCLUDE</a></dt>
 <dd>
 Include a file. See
 <a href="#sourcefilename">the file names chapter</a>
@@ -1070,7 +1040,7 @@ INCLUDE directives are processed before the assembly phases, so the use
 of IF directives to conditionally include different files is not allowed.
 </dd>
 
-<dt><a name="dirincbin">INCBIN</a></dt>
+<dt><a id="dirincbin">INCBIN</a></dt>
 <dd>
 INClude BINary. Include a binary file. Reads a binary file and insert
 his content in the generated code at the current position. See
@@ -1078,13 +1048,13 @@ his content in the generated code at the current position. See
 for the conventions used in the argument.
 </dd>
 
-<dt><a name="dirirp">IRP</a></dt>
+<dt><a id="dirirp">IRP</a></dt>
 <dd>
 Repeat a block of code substituing arguments. See
 <a href="#macros">the chapter about macros</a>.
 </dd>
 
-<dt><a name="dirlocal">LOCAL</a></dt>
+<dt><a id="dirlocal">LOCAL</a></dt>
 <dd>
 Marks identifiers as local to the current block. The block may be
 a MACRO, REPT, IRP or PROC directive, the local ambit ends in the
@@ -1094,13 +1064,13 @@ If several LOCAL declations of the same identifier are used in the same
 block, only the first has effect, the others are ignored.
 </dd>
 
-<dt><a name="dirmacro">MACRO</a></dt>
+<dt><a id="dirmacro">MACRO</a></dt>
 <dd>
 Defines a macro, see
 <a href="#macros">the chapter about macros</a>.
 </dd>
 
-<dt><a name="dirorg">ORG</a></dt>
+<dt><a id="dirorg">ORG</a></dt>
 <dd>
 ORiGin. Establishes the origin position where to place generated
 code. Several ORG directives can be used in the same program, but if
@@ -1108,7 +1078,7 @@ the result is that code generated overwrites previous, the result is
 undefined.
 </dd>
 
-<dt><a name="dirproc">PROC</a></dt>
+<dt><a id="dirproc">PROC</a></dt>
 <dd>
 Marks the begin of a PROC block. The only effect is to define
 an ambit for LOCAL directives. The block ends with a corresponding
@@ -1116,14 +1086,14 @@ ENDP directive. The recommended use is to enclose a subroutine in
 a PROC block, but can also be used in any other situation.
 </dd>
 
-<dt><a name="dirpublic">PUBLIC</a></dt>
+<dt><a id="dirpublic">PUBLIC</a></dt>
 <dd>
 The argument is a comma separated list of identifiers. Each identifier
 is marked as public. When using the --public command line option only the
 identifiers marked as public are included in the symbol table listing.
 </dd>
 
-<dt><a name="dirrept">REPT</a></dt>
+<dt><a id="dirrept">REPT</a></dt>
 <dd>
 REPeaTs a block. See <a href="#macros">the chapter about macros</a>.
 </dd>
@@ -1153,9 +1123,9 @@ foo   with value 9 i.e., the size of the struct.
 
 </dl>
 
-<h2><a name="operators">Operators</a>.</h2>
+<h2><a id="operators">Operators</a>.</h2>
 
-<h3><a name="opergeneral">Generalities</a>.</h3>
+<h3><a id="opergeneral">Generalities</a>.</h3>
 
 <p>
 All numeric values are taken as 16 bits unsigned, using 2 complement or
@@ -1187,7 +1157,7 @@ operator to the second operand if the first is false, and in the ||
 operator to the second operand if the first is true.
 </p>
 
-<h3><a name="opertable">Table of precedence</a>.</h3>
+<h3><a id="opertable">Table of precedence</a>.</h3>
 
 <p>
 Table of operators by order of precedence, those in the same line have the
@@ -1214,7 +1184,7 @@ The ## operator is an special case, is processed during the macro expansion,
 see <a href="#macros">the chapter about macros</a>.
 </p>
 
-<h3><a name="operlist">Alphabetic list of operators</a>.</h3>
+<h3><a id="operlist">Alphabetic list of operators</a>.</h3>
 
 <dl>
 
@@ -1390,9 +1360,9 @@ Bitwise xor (exclusive or) operator.
 
 </dl>
 
-<h2><a name="macros">Macros</a>.</h2>
+<h2><a id="macros">Macros</a>.</h2>
 
-<h3><a name="macrogeneral">Generalities</a>.</h3>
+<h3><a id="macrogeneral">Generalities</a>.</h3>
 
 <p>
 There are two types of macro directives: the proper MACRO directive
@@ -1417,11 +1387,11 @@ two idenfiers resulting in another identifier. This is intended to allow
 the creation of identifiers dependent of macro arguments.
 </p>
 
-<h3><a name="macrodirectives">Directives</a>.</h3>
+<h3><a id="macrodirectives">Directives</a>.</h3>
 
 <dl>
 
-<dt><a name="macroshift">.SHIFT</a></dt>
+<dt><a id="macroshift">.SHIFT</a></dt>
 <dd>
 Can be used only inside a MACRO. The MACRO arguments are shitted one
 place to the left, the first argument is discarded. If there are not
@@ -1429,13 +1399,13 @@ enough arguments to fill the parameter list after the shift, the
 remaining arguments get undefined.
 </dd>
 
-<dt><a name="macroendm">ENDM</a></dt>
+<dt><a id="macroendm">ENDM</a></dt>
 <dd>
 Marks the end of the current MACRO definition, or the current REPT or
 IRP block. All IF blocks contained in the macro block are also closed.
 </dd>
 
-<dt><a name="macroexitm">EXITM</a></dt>
+<dt><a id="macroexitm">EXITM</a></dt>
 <dd>
 Exits the curren MACRO, REPT or IRP block. In the case of MACRO, the
 macro expansion is finished, in the other cases the code generation
@@ -1443,7 +1413,7 @@ of the block is terminated and the assembly continues after the
 corresponding ENDM.
 </dd>
 
-<dt><a name="macroirp">IRP</a></dt>
+<dt><a id="macroirp">IRP</a></dt>
 <dd>
 <pre>
 	IRP parameter, argument list.
@@ -1452,7 +1422,7 @@ Repeats the block of code between the IRP directive and his corresponding
 ENDM one time for each of the arguments.
 </dd>
 
-<dt><a name="macromacro">MACRO</a></dt>
+<dt><a id="macromacro">MACRO</a></dt>
 <dd>
 Defines a macro. There are two forms that can be used:
 <pre>
@@ -1472,7 +1442,7 @@ shorter some parameters get undefined, this can be tested inside the MACRO
 by using the NUL operator.
 </dd>
 
-<dt><a name="macrorept">REPT</a></dt>
+<dt><a id="macrorept">REPT</a></dt>
 <dd>
 Repeats the block of code between the REPT directive and his corresponding
 ENDM the number of times specified in his argument. The argument can be
@@ -1485,7 +1455,7 @@ iteration. The initial value and incement can be specified, with defaults of
 
 </dl>
 
-<h2><a name="discussion">About suggestions and possible improvements</a>.</h2>
+<h2><a id="discussion">About suggestions and possible improvements</a>.</h2>
 
 <p>
 The assumption of Pasmo if that, being a cross-assembler, it will be
@@ -1532,7 +1502,7 @@ corrected bugs. And to these that show me the beautiful things they
 do with Pasmo.
 </p>
 
-<h2><a name="tricks">Tricks</a>.</h2>
+<h2><a id="tricks">Tricks</a>.</h2>
 
 <p>
 You can use Pasmo to convert any binary file to .tap, just write a tiny
@@ -1549,7 +1519,8 @@ Assemble it with: pasmo --tap convert.asm file.tap, and you have it.
 The same may be done for the other formats supported.
 </p>
 
-<h2><a name="bugs">Bugs</a>.</h2>
+<h2><a id="bugs">Bugs</a>.</h2>
+
 <p>
 Pasmo has issues with IX and IY register index calculation. Specifically e.g., (IX-12+13) would generate code that is equivalent to (IX-25). This is "dirty fixed" currently using parsing time patching that inserts "+0" immediately after IX or IY. So e.g., (IX-12+13) would become internally (IX+0-12+13), which then generates a correct result.
 </br>
@@ -1572,19 +1543,18 @@ More suggestions about that are wellcome.
 
 <h2><a name="contributions">Contributions</a>.</h2>
 <p>
- (c) 2018-20 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.4.beta8.paged):
+ (c) 2018-2023 <a href="mailto:jouni.korhonen@iki.fi">Jouni Korhonen</a> (version 0.5.5.paged):
  <ul>
    <li>Added BANKed memory support, related directives and command line options. 
    <li>Added STRUCT/ENDS support and related directives. 
    <li>Added DUP/EDUP support. 
    <li>Modified IX/IY index calculations, see <a href="#bugs">Bugs</a>. 
-   <li>Added SNA 128K code generation support.
    <li>Applied the same hotfix to EQU calculation used with IX/IY index calculation to allow values
    starting with '-'.
  </ul>
 </p>
 
-<h2><a name="epilogue">Epilogue</a>.</h2>
+<h2><a id="epilogue">Epilogue</a>.</h2>
 
 <p>That's all folks!</p>
 
@@ -1596,7 +1566,7 @@ Send comments and criticisms to:
 </address>
 
 <p>
-<a href="http://validator.w3.org/check?uri=referer">Valid HTML 4.0!</a>
+<a href="https://validator.w3.org/check?uri=referer">Valid HTML 4.0!</a>
 </p>
 
 </body>
