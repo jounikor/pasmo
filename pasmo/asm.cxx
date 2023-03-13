@@ -7308,7 +7308,7 @@ void Asm::emitcdtbas(std::ostream & out)
 
 void Asm::emittapbas(std::ostream & out)
 {
-    pin->showdebugmsg("Emiting TZX with basic loader");
+    pin->showdebugmsg("Emiting TAP with basic loader");
 
     // Prepare the data.
 
