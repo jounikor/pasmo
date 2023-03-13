@@ -26,6 +26,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <algorithm>
+#include <cassert>
 
 #include <ctype.h>
 
@@ -3109,7 +3110,7 @@ void Asm::In::parseSTRUCT (Tokenizer & tz, const std::string & name)
     //
 
     *pout << "Defining STRUCT " << name << "\n";
-    assert(!name.empty());
+    assert(!name.empty());      // *JiK*
 
     // Not sure it this is needed..
         if (autolocalmode)
