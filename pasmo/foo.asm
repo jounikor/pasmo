@@ -26,7 +26,7 @@ zzz     ds foof
     ORG $8000       ; -> fixed at BANK2
 
 
-    STACK $6000
+    ;STACK $6000
 
 main:
     ld  ix,main
