@@ -24,5 +24,3 @@ Alternatively you can execute the build_all.sh script:
 
 ### Examples ###
 See the "foo.asm" example code.
-
-
